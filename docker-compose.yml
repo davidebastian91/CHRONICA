@@ -1,0 +1,22 @@
+services:
+  chronica:
+    build: .
+    container_name: chronica-server
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mantiene i file delle cronache e schede persistenti sul disco
+      - ./saves:/app/saves
+      - ./server.cjs:/app/server.cjs
+    environment:
+      - PORT=5173
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+
+  chronica-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: chronica-tunnel
+    restart: unless-stopped
+    network_mode: host
+    command: tunnel --no-autoupdate --url http://127.0.0.1:5173
+

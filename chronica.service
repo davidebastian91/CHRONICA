@@ -1,0 +1,16 @@
+[Unit]
+Description=Chronica TTRPG Storyteller Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/chronica
+ExecStart=/usr/bin/node /opt/chronica/server.cjs
+Restart=always
+RestartSec=5
+Environment=PORT=5173
+
+[Install]
+WantedBy=multi-user.target
+
