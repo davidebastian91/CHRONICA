@@ -36,37 +36,8 @@ if (!fs.existsSync(SAVES_DIR)) {
   fs.mkdirSync(SAVES_DIR, { recursive: true });
 }
 
-// Gestione Profili con PIN / Password (stile console/Netflix)
-const PROFILES_FILE = path.join(SAVES_DIR, 'profiles.json');
-
-function getProfiles() {
-  if (!fs.existsSync(PROFILES_FILE)) {
-    const defaultProfiles = [
-      {
-        id: 'master',
-        name: 'Master / Creatore',
-        pin: '1234',
-        isMaster: true,
-        avatar: 'crown',
-        createdAt: Date.now(),
-      },
-    ];
-    try {
-      fs.writeFileSync(PROFILES_FILE, JSON.stringify(defaultProfiles, null, 2), 'utf-8');
-    } catch {}
-    return defaultProfiles;
-  }
-  try {
-    const raw = fs.readFileSync(PROFILES_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
-
-function saveProfiles(profiles) {
-  fs.writeFileSync(PROFILES_FILE, JSON.stringify(profiles, null, 2), 'utf-8');
-}
+// Modulo Database Persistente (Supabase Cloud PostgreSQL o fallback locale)
+const db = require('./db.cjs');
 
 // Cache in memoria per audio TTS (chiave: hash MD5 del testo, valore: Buffer MP3)
 const ttsCache = new Map();
@@ -552,7 +523,7 @@ const MIME_TYPES = {
 };
 
 // 1. Server HTTP (Static files + API)
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -621,7 +592,8 @@ const server = http.createServer((req, res) => {
 
   // API 1.5: Gestione Profili Protetti con PIN (stile Netflix / Console)
   if (pathname === '/api/profiles' && req.method === 'GET') {
-    const list = getProfiles().map((p) => ({
+    const rawProfiles = await db.getProfiles();
+    const list = rawProfiles.map((p) => ({
       id: p.id,
       name: p.name,
       isMaster: !!p.isMaster,
@@ -636,10 +608,10 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/profiles/verify' && req.method === 'POST') {
     let body = '';
     req.on('data', (c) => (body += c));
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const { profileId, pin } = JSON.parse(body);
-        const profiles = getProfiles();
+        const profiles = await db.getProfiles();
         const match = profiles.find((p) => p.id === profileId && String(p.pin).trim() === String(pin).trim());
         if (match) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -669,10 +641,10 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/profiles/admin-list' && req.method === 'POST') {
     let body = '';
     req.on('data', (c) => (body += c));
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const { masterPin } = JSON.parse(body);
-        const profiles = getProfiles();
+        const profiles = await db.getProfiles();
         const master = profiles.find((p) => p.isMaster);
 
         if (!master || String(master.pin).trim() !== String(masterPin).trim()) {
@@ -695,10 +667,10 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/profiles/manage' && req.method === 'POST') {
     let body = '';
     req.on('data', (c) => (body += c));
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const { masterPin, action, profileData } = JSON.parse(body);
-        const profiles = getProfiles();
+        const profiles = await db.getProfiles();
         const master = profiles.find((p) => p.isMaster);
 
         if (!master || String(master.pin).trim() !== String(masterPin).trim()) {
@@ -717,7 +689,7 @@ const server = http.createServer((req, res) => {
             createdAt: Date.now(),
           };
           profiles.push(newProfile);
-          saveProfiles(profiles);
+          await db.saveProfiles(profiles);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, profile: newProfile }));
           return;
@@ -729,7 +701,7 @@ const server = http.createServer((req, res) => {
             target.pin = String(profileData.newPin).trim();
             if (profileData.newName) target.name = profileData.newName.trim();
             if (profileData.newAvatar) target.avatar = profileData.newAvatar;
-            saveProfiles(profiles);
+            await db.saveProfiles(profiles);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
               success: true,
@@ -754,7 +726,7 @@ const server = http.createServer((req, res) => {
             return;
           }
           const filtered = profiles.filter((p) => p.id !== profileData.id);
-          saveProfiles(filtered);
+          await db.saveProfiles(filtered);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true }));
           return;
@@ -770,43 +742,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // API 2: Lista Salvataggi su Disco (Filtrata per Profilo)
+  // API 2: Lista Salvataggi (Database Cloud o Disco Locale)
   if (pathname === '/api/saves' && req.method === 'GET') {
     try {
       const targetProfileId = parsedUrl.searchParams.get('profileId');
-      const files = fs.readdirSync(SAVES_DIR).filter((f) => f.endsWith('.json') && f !== 'profiles.json');
-      const list = [];
-
-      for (const file of files) {
-        const filePath = path.join(SAVES_DIR, file);
-        const stats = fs.statSync(filePath);
-        try {
-          const raw = fs.readFileSync(filePath, 'utf-8');
-          const data = JSON.parse(raw);
-
-          // Se è specificato un profilo, mostra solo le sue cronache (a meno che non sia richiesto tutto con 'all')
-          const saveProfileId = data.profileId || 'master';
-          if (targetProfileId && targetProfileId !== 'all' && saveProfileId !== targetProfileId) {
-            continue;
-          }
-
-          list.push({
-            id: file.replace('.json', ''),
-            fileName: file,
-            title: data.campaign?.title || file,
-            era: data.campaign?.era || 'Non specificata',
-            city: data.campaign?.city || 'Sconosciuta',
-            characterName: data.character?.name || 'Senza Nome',
-            messagesCount: data.messages?.length || 0,
-            updatedAt: stats.mtimeMs,
-            profileId: saveProfileId,
-            authorName: data.authorName || (saveProfileId === 'master' ? 'Al Bocia' : 'Giocatore'),
-          });
-        } catch {
-          list.push({ id: file, fileName: file, updatedAt: stats.mtimeMs });
-        }
-      }
-
+      const list = await db.listSaves(targetProfileId);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(list));
     } catch (err) {
@@ -985,16 +925,14 @@ Rispondi ESCLUSIVAMENTE con un JSON valido con questa struttura esatta:
     return;
   }
 
-  // API 3: Salva Cronaca su Disco
+  // API 3: Salva Cronaca (Database Cloud o Disco Locale)
   if (pathname === '/api/saves' && req.method === 'POST') {
     let body = '';
     req.on('data', (chunk) => (body += chunk));
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const payload = JSON.parse(body);
-        const saveId = payload.id || `save_${Date.now()}`;
-        const filePath = path.join(SAVES_DIR, `${saveId}.json`);
-        fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+        const saveId = await db.saveChronicle(payload);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, id: saveId }));
       } catch (err) {
@@ -1005,13 +943,13 @@ Rispondi ESCLUSIVAMENTE con un JSON valido con questa struttura esatta:
     return;
   }
 
-  // API 4: Carica Singolo Salvataggio da Disco
+  // API 4: Carica Singolo Salvataggio
   if (pathname.startsWith('/api/saves/') && req.method === 'GET') {
     const saveId = pathname.replace('/api/saves/', '');
-    const filePath = path.join(SAVES_DIR, `${saveId}.json`);
-    if (fs.existsSync(filePath)) {
+    const data = await db.loadChronicle(saveId);
+    if (data) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      fs.createReadStream(filePath).pipe(res);
+      res.end(JSON.stringify(data));
     } else {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Salvataggio non trovato' }));
@@ -1022,9 +960,8 @@ Rispondi ESCLUSIVAMENTE con un JSON valido con questa struttura esatta:
   // API 5: Elimina Salvataggio
   if (pathname.startsWith('/api/saves/') && req.method === 'DELETE') {
     const saveId = pathname.replace('/api/saves/', '');
-    const filePath = path.join(SAVES_DIR, `${saveId}.json`);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    const deleted = await db.deleteChronicle(saveId);
+    if (deleted) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true }));
     } else {
@@ -2486,15 +2423,24 @@ wss.on('connection', (ws) => {
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  const localIp = getLocalIpAddress();
-  console.log('\n========================================================');
-  console.log('       🌑 CHRONICA SERVER - PRONTO PER IL TAVOLO        ');
-  console.log('========================================================');
-  console.log(`➜ Accesso Locale:    http://localhost:${PORT}`);
-  console.log(`➜ Dal Cellulare:     http://${localIp}:${PORT}`);
-  console.log(`➜ Salvataggi disco:  ${SAVES_DIR}`);
-  console.log(`➜ IA Narratore:      Gemini 3.8 Flash Attivo`);
-  console.log(`➜ Voce Neurale HD:   it-IT-DiegoNeural Attiva`);
-  console.log('========================================================\n');
+async function startServer() {
+  await db.initDb();
+
+  server.listen(PORT, '0.0.0.0', () => {
+    const localIp = getLocalIpAddress();
+    console.log('\n========================================================');
+    console.log('       🌑 CHRONICA SERVER - PRONTO PER IL TAVOLO        ');
+    console.log('========================================================');
+    console.log(`➜ Accesso Locale:    http://localhost:${PORT}`);
+    console.log(`➜ Dal Cellulare:     http://${localIp}:${PORT}`);
+    console.log(`➜ Archivio Dati:     ${process.env.DATABASE_URL ? 'Supabase PostgreSQL Cloud' : SAVES_DIR}`);
+    console.log(`➜ IA Narratore:      Gemini Flash Attivo`);
+    console.log(`➜ Voce Neurale HD:   it-IT-DiegoNeural Attiva`);
+    console.log('========================================================\n');
+  });
+}
+
+startServer().catch((err) => {
+  console.error('[CRITICAL] Errore avvio server:', err);
+  process.exit(1);
 });

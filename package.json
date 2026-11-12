@@ -19,6 +19,7 @@
     "lucide-react": "^1.61.0",
     "mammoth": "^1.13.0",
     "msedge-tts": "^2.1.1",
+    "pg": "^8.23.1",
     "qrcode.react": "^4.2.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
