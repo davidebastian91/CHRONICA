@@ -555,6 +555,103 @@ export const WOD_WEAPONS_CATALOG: WodWeapon[] = [
     size: 2,
     description: 'Schermo del Narratore — Mod. Lancio: n/a (Innesco/Tempo) | Area Esplosione: 20+m | Danno: 6+ (L) | Taglia: 1-3 | Costo: ••••.',
   },
+
+  // --- ARMI DELL'ERA DI TRANSIZIONE (FERRO, POLVERE NERA & MAGIA) ---
+  {
+    id: 'firearms_flintlock_heavy',
+    name: '🔫 Pistola Pesante a Pietra Focaia',
+    category: 'firearms',
+    baseDamage: 3,
+    addStrength: false,
+    damageType: 'lethal',
+    difficulty: 7,
+    conceal: 'J',
+    rangeMeters: 30,
+    clipSize: 1,
+    size: 1,
+    description: 'Canna rinforzata in ferro battuto cal. 18mm. Danno: 3 (L) | Gittata: 15/30/60m | Perforante 1 | Monocolpo.',
+  },
+  {
+    id: 'firearms_musket',
+    name: '🔫 Moschetto d\'Ordinanza con Baionetta',
+    category: 'firearms',
+    baseDamage: 4,
+    addStrength: false,
+    damageType: 'lethal',
+    difficulty: 8,
+    conceal: 'N',
+    rangeMeters: 80,
+    clipSize: 1,
+    size: 3,
+    description: 'Arma da fuoco d\'ordinanza a canna lunga con baionetta a ghiera. Danno: 4 (L) | Perforante 2 | Due Mani†.',
+  },
+  {
+    id: 'firearms_blunderbuss',
+    name: '🔫 Trombone da Assalto (a Canne Svasate)',
+    category: 'firearms',
+    baseDamage: 4,
+    addStrength: false,
+    damageType: 'lethal',
+    difficulty: 7,
+    conceal: 'T',
+    rangeMeters: 15,
+    clipSize: 1,
+    size: 2,
+    description: 'Canna svasata a campana caricata a mitraglia/chiodi. Danno: 4 (L) a cono | Ignora Difesa ravvicinata | Due Mani†.',
+  },
+  {
+    id: 'melee_carbon_blades',
+    name: '🗡️ Lame Gemelle in Acciaio al Carbonio',
+    category: 'melee',
+    baseDamage: 2,
+    addStrength: true,
+    damageType: 'lethal',
+    difficulty: 6,
+    conceal: 'J',
+    size: 2,
+    minStrength: 2,
+    description: 'Lame ultra-temprate bilanciate per mancino, ideali per condurre scariche elementali o magiche. Danno: Forza + 2 (L).',
+  },
+  {
+    id: 'melee_gunsword',
+    name: '🗡️ Spada-Pistola da Duellante',
+    category: 'melee',
+    baseDamage: 2,
+    addStrength: true,
+    damageType: 'lethal',
+    difficulty: 6,
+    conceal: 'T',
+    rangeMeters: 10,
+    size: 2,
+    minStrength: 2,
+    description: 'Lama da lato con canna da sparo a bruciapelo integrata. Danno: Forza + 2 (L) mischia / 3 (L) sparo.',
+  },
+  {
+    id: 'melee_heavy_cleaver',
+    name: '🪓 Mannaia da Smantellamento Pesante',
+    category: 'melee',
+    baseDamage: 3,
+    addStrength: true,
+    damageType: 'lethal',
+    difficulty: 7,
+    conceal: 'N',
+    size: 3,
+    minStrength: 3,
+    description: 'Mannaia industriale a due mani. Spacca-scudi e declassa corazze pesanti. Danno: Forza + 3 (L) | Due Mani†.',
+  },
+  {
+    id: 'melee_steam_shield',
+    name: '🛡️ Scudo a Torre da Costrutto a Vapore',
+    category: 'melee',
+    baseDamage: 1,
+    addStrength: true,
+    damageType: 'bashing',
+    difficulty: 7,
+    conceal: 'N',
+    size: 3,
+    minStrength: 3,
+    description: 'Piastra blindata di macchina a vapore con feritoia di mira. Danno: 1 (C) | Copertura totale da armi da fuoco | Ancoraggio.',
+  },
 ];
 
 /**
@@ -582,11 +679,18 @@ export function findWeaponFromText(weaponName?: string): WodWeapon | null {
   if (lower.includes('paletto')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_stake') || null;
   if (lower.includes('spadone')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_greatsword') || null;
   if (lower.includes('stocco') || lower.includes('fioretto')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_rapier') || null;
+  if (lower.includes('mannaia') || lower.includes('cleaver')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_heavy_cleaver') || null;
+  if (lower.includes('lame gemelle') || lower.includes('carbonio')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_carbon_blades') || null;
+  if (lower.includes('spada-pistola') || lower.includes('gunsword') || lower.includes('gunblade')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_gunsword') || null;
   if (lower.includes('spada')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_sword') || null;
+  if (lower.includes('costrutto') || lower.includes('scudo a torre')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_steam_shield') || null;
   if (lower.includes('scudo tattico') || (lower.includes('scudo') && lower.includes('balistico'))) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_tactical_shield') || null;
   if (lower.includes('scudo')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_shield') || null;
   if (lower.includes('coltello') || lower.includes('pugnale') || lower.includes('daga')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'melee_knife') || null;
 
+  if (lower.includes('moschetto') || lower.includes('archibugio')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'firearms_musket') || null;
+  if (lower.includes('trombone') || lower.includes('blunderbuss')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'firearms_blunderbuss') || null;
+  if (lower.includes('pietra focaia') || lower.includes('flintlock')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'firearms_flintlock_heavy') || null;
   if (lower.includes('mitragliatrice') || lower.includes('supporto') || lower.includes('m60') || lower.includes('minimi') || lower.includes('lmg')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'firearms_heavy_mg') || null;
   if (lower.includes('cecchino') || lower.includes('sniper') || lower.includes('precisione') || lower.includes('barrett') || lower.includes('l96')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'firearms_sniper') || null;
   if (lower.includes('arco') || lower.includes('bow') || lower.includes('freccia')) return WOD_WEAPONS_CATALOG.find((w) => w.id === 'ranged_bow') || null;

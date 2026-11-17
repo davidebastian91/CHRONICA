@@ -8,6 +8,11 @@ import {
 } from '../utils/inventorySystem';
 import { matchWeaponFromCatalog } from '../utils/wodCombatRules';
 import {
+  convertGearOptionToInventoryItem,
+  type ThematicGearOption,
+} from '../utils/wodMeritsAndGear';
+import { QuickWeaponForgeModal } from './QuickWeaponForgeModal';
+import {
   Shield,
   Plus,
   Minus,
@@ -15,6 +20,7 @@ import {
   AlertCircle,
   Package,
   Swords,
+  Hammer,
 } from 'lucide-react';
 
 interface StructuredInventoryViewProps {
@@ -32,6 +38,7 @@ export const StructuredInventoryView: React.FC<StructuredInventoryViewProps> = (
 }) => {
   const [activeCategory, setActiveCategory] = useState<ItemCategory | 'all'>('all');
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+  const [showForgeModal, setShowForgeModal] = useState(false);
 
   // Form aggiunta per Master
   const [showAddForm, setShowAddForm] = useState(false);
@@ -106,6 +113,13 @@ export const StructuredInventoryView: React.FC<StructuredInventoryViewProps> = (
     showToast(`Aggiunto ${newItem.name} all'inventario.`);
   };
 
+  const handleForgeAdd = (gear: ThematicGearOption) => {
+    const newItem = convertGearOptionToInventoryItem(gear);
+    const updatedItems = [newItem, ...items];
+    onUpdateCharacter(updateCharacterInventory(character, updatedItems));
+    showToast(`Forgiato con successo: ${gear.name}`);
+  };
+
   const filteredItems = activeCategory === 'all'
     ? items
     : items.filter((i) => i.category === activeCategory);
@@ -165,6 +179,15 @@ export const StructuredInventoryView: React.FC<StructuredInventoryViewProps> = (
             </button>
           );
         })}
+
+        <button
+          type="button"
+          onClick={() => setShowForgeModal(true)}
+          className="ml-auto px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-500 hover:to-amber-700 text-white shadow-md shadow-amber-950/60 flex items-center space-x-1.5 cursor-pointer transition-transform hover:scale-105 border border-amber-500/60"
+        >
+          <Hammer className="w-3.5 h-3.5 text-amber-200" />
+          <span>🔨 Forgia Rapida</span>
+        </button>
       </div>
 
       {/* Lista Oggetti */}
@@ -424,6 +447,13 @@ export const StructuredInventoryView: React.FC<StructuredInventoryViewProps> = (
           </div>
         </form>
       )}
+
+      {/* Modale Banco di Forgiatura Rapido */}
+      <QuickWeaponForgeModal
+        isOpen={showForgeModal}
+        onClose={() => setShowForgeModal(false)}
+        onAddGear={handleForgeAdd}
+      />
     </div>
   );
 };

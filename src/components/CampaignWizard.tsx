@@ -41,8 +41,10 @@ import {
   MapPin,
   Trash2,
   Wand2,
+  Hammer,
 } from 'lucide-react';
 import { StoryForgeModal, type ForgedStoryResult } from './StoryForgeModal';
+import { QuickWeaponForgeModal } from './QuickWeaponForgeModal';
 
 interface CampaignWizardProps {
   onStartCampaign: (config: CampaignConfig, character: Character | null, initialHook?: string) => void;
@@ -399,6 +401,7 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
   const [customGearItems, setCustomGearItems] = useState<any[]>([]);
   const [gearTab, setGearTab] = useState<'all' | ScreenGearCategory>('all');
   const [filterGearByEra, setFilterGearByEra] = useState<boolean>(false);
+  const [isForgeModalOpen, setIsForgeModalOpen] = useState<boolean>(false);
 
   // Regole Chronica Engine: Priorità Categorie Attributi (5 / 4 / 3)
   const [primaryCat, setPrimaryCat] = useState<'physical' | 'social' | 'mental'>('physical');
@@ -2246,6 +2249,14 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
+                        onClick={() => setIsForgeModalOpen(true)}
+                        className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 hover:from-amber-500 hover:to-amber-700 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md shadow-amber-950/70 flex items-center space-x-1.5 cursor-pointer transition-transform hover:scale-105 border border-amber-500/60"
+                      >
+                        <Hammer className="w-3.5 h-3.5 text-amber-200" />
+                        <span>🔨 Forgia Arma o Munizioni</span>
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setFilterGearByEra((prev) => !prev)}
                         className={`px-3 py-1.5 rounded-lg text-[11px] font-mono border transition-all cursor-pointer ${
                           filterGearByEra
@@ -2256,7 +2267,7 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                         {filterGearByEra ? `Filtro Epoca Attivo (${era})` : 'Catalogo Completo (Tutte le Epoche)'}
                       </button>
                       <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-700 text-emerald-300 whitespace-nowrap">
-                        {selectedGearIds.length} Selezionati
+                        {selectedGearIds.length + customGearItems.length} Selezionati
                       </span>
                     </div>
                   </div>
@@ -2864,6 +2875,13 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
         isOpen={isStoryForgeOpen}
         onClose={() => setIsStoryForgeOpen(false)}
         onApplyToCampaign={handleApplyForgedStory}
+      />
+
+      {/* Modale Banco di Forgiatura Rapido */}
+      <QuickWeaponForgeModal
+        isOpen={isForgeModalOpen}
+        onClose={() => setIsForgeModalOpen(false)}
+        onAddGear={(item) => setCustomGearItems((prev) => [item, ...prev])}
       />
     </div>
   );
