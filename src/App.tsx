@@ -916,7 +916,10 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
             updatedMessages,
             promptAction,
             undefined,
-            getPartySnapshot()
+            getPartySnapshot(),
+            undefined,
+            activeEnemies,
+            activeObstacle
           );
 
           const narratorMsg: StoryMessage = {
@@ -1169,7 +1172,10 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         updatedMessages,
         promptAction,
         undefined,
-        getPartySnapshot()
+        getPartySnapshot(),
+        undefined,
+        activeEnemies,
+        activeObstacle
       );
 
       processAIResponseEncounters(response, response.text);
@@ -1296,7 +1302,10 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         updatedMessages,
         `${rollSummaryText}\n[Narra l'attacco appena effettuato da ${enemy.name} contro ${targetDisplayName} e passa la parola al gruppo per il loro prossimo turno!]`,
         attackOutcome.rollResult,
-        getPartySnapshot()
+        getPartySnapshot(),
+        undefined,
+        activeEnemies,
+        activeObstacle
       );
 
       processAIResponseEncounters(response, response.text);
@@ -1502,8 +1511,10 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
 
         if (statusAfter.isDefeated) {
           aiMechanicalContext += `\n\n[💀 STATO SALUTE NEMICO "${updatedEnemy.name}": ${senderDisplayName} gli ha inflitto ${dmg} danni ed è sceso a 0/${updatedEnemy.maxHealth} caselle Salute integre! IL NEMICO È STATO SCONFITTO / ELIMINATO DEFINITIVAMENTE! Puoi narrare il suo abbattimento!]`;
-        } else {
+        } else if (dmg > 0) {
           aiMechanicalContext += `\n\n[🩸 STATO SALUTE NEMICO "${updatedEnemy.name}": ${senderDisplayName} gli ha inflitto ${dmg} danni, ma gli restano ancora ${statusAfter.undamagedBoxes}/${updatedEnemy.maxHealth} caselle Salute integre (${statusAfter.statusText}). DIVIETO ASSOLUTO DI FARLO MORIRE! Il nemico incassa il colpo, è ferito ma resta in piedi e attivo nello scontro!]`;
+        } else {
+          aiMechanicalContext += `\n\n[🛡️ ATTACCO MANCATO / PARATO: ${senderDisplayName} ha ottenuto 0 successi contro "${updatedEnemy.name}" (colpo a vuoto o impattato sulla Difesa/Armatura). ${senderDisplayName} si sbilancia o resta scoperto! Il nemico è attivo e coglie l'apertura per contrattaccare!]`;
         }
       }
     }
@@ -1529,7 +1540,10 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         updatedMessages,
         actionText + aiMechanicalContext,
         roll,
-        getPartySnapshot()
+        getPartySnapshot(),
+        undefined,
+        activeEnemies,
+        activeObstacle
       );
 
       processAIResponseEncounters(response, response.text);

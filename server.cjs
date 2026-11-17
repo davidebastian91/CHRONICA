@@ -1254,7 +1254,7 @@ Scrivi il Prologo Iniziale in lingua ITALIANA con stile narrativo profondo ed ev
     req.on('data', (chunk) => (body += chunk));
     req.on('end', async () => {
       try {
-        const { campaign, character, history, latestAction, latestRoll, party } = JSON.parse(body);
+        const { campaign, character, history, latestAction, latestRoll, party, activeEnemies, activeObstacle } = JSON.parse(body);
 
         const actingChar = character || (Array.isArray(party) && party[0]?.character) || null;
         const actingName = actingChar?.name || 'Giocatore';
@@ -1315,10 +1315,19 @@ REGOLE ESSENZIALI DI GIOCO:
      [[TIRO: {"attribute": "Destrezza", "ability": "Armi da Fuoco", "difficulty": 8, "modifier": -5, "reason": "Colpire il punto debole del medaglione"}]]
    - Se non ci sono modificatori particolari:
      [[TIRO: {"attribute": "Destrezza", "ability": "Armi da Fuoco", "difficulty": 8, "reason": "Centrare il bersaglio in movimento"}]]
-4. CONSEGUENZE DEI TIRI E COMBATTIMENTO A TIRO UNICO (COMPENDIO SEZ. 1.3):
-   - Fallimento Drammatico (1 sul Tiro di Fortuna) / Fallimento Semplice (0 successi): descrivi tu la complicazione, l'arma inceppata o il contrattacco nemico.
-   - Successo (1-4 successi) / Successo Eccezionale (5+ successi): basta 1 solo successo per superare un'azione standard! SE IL GIOCATORE HA OTTENUTO SUCCESSI E HA FORNITO UNA "Narrazione del Giocatore", ACCETTA E CONFERMA AL 100% QUANTO NARRATO DAL GIOCATORE!
-   - COMBATTIMENTO IN UN SOLO TIRO: Nel Chronica Engine NON esiste un secondo tiro per i danni né un tiro di assorbimento! Difesa e Armatura vengono sottratte direttamente dalla riserva d'attacco e OGNI SUCCESSO OTTENUTO INFLIGGE DIRETTAMENTE 1 PUNTO SALUTE DI DANNO (Contundente /, Letale X o Aggravato *).
+4. CONSEGUENZE DEI TIRI, COMBATTIMENTO E DINAMICA AZIONE-REAZIONE (PARITÀ ASSOLUTA - NO PLOT ARMOR):
+   - NESSUN PRIVILEGIO PER I GIOCATORI: I protagonisti NON sono intoccabili o divinità invulnerabili. Sanguinano, soffrono il dolore e rischiano la vita ad ogni errore tattico.
+   - DINAMICA NATURALE DEI FALLIMENTI (NESSUN DANNO ARBITRARIO, MA REAZIONE TATTICA DEI NEMICI):
+     • Se il giocatore fallisce un tiro (0 successi) o compie un'azione incauta/esposta, NON subisce danno automatico o punitivo dal nulla. L'attacco va a vuoto, l'arma rimbalza su un riparo/armatura o il personaggio si sbilancia perdendo temporaneamente la Difesa o la copertura.
+     • L'avversario presente COGLIE IMMEDIATAMENTE L'APERTURA e risponde contrattaccando nel momento della vulnerabilità!
+     • CALCOLO EFFETTIVO DEL TIRO NEMICO (RISERVA NEMICO CONTRO DIFESA GIOCATORE):
+       Il Narratore calcola l'attacco del nemico usando la sua Riserva Dadi (attackPool, tipicamente da 6 a 9 dadi D10 contro la Difesa e l'Armatura del bersaglio):
+       - Se l'attacco nemico ottiene successi netti (> 0): il colpo VA A SEGNO PER DAVVERO! Descrivi la ferita, il sangue o l'impatto brutale e inserisci OBBLIGATORIAMENTE il blocco di aggiornamento Salute:
+         [[DANNO_GIOCATORE: {"points": X, "type": "lethal", "reason": "Contrattacco nemico andato a segno"}]]
+       - Se l'attacco nemico fa 0 successi netti: il nemico sferra il fendente o spara, ma il giocatore riesce a parare disperatamente all'ultimo secondo o a tuffarsi dietro un riparo.
+     • È TASSATIVAMENTE VIETATO far esitare i nemici senza motivo, farli limitare a ringhiare o minacciare a parole se hanno la linea di tiro o la lama a portata, o "tirare indietro i colpi" per pietà del giocatore!
+   - SUCCESSUALITÀ DEI TIRI: Successo (1-4 successi) / Successo Eccezionale (5+ successi): basta 1 solo successo per superare un'azione standard! SE IL GIOCATORE HA OTTENUTO SUCCESSI E HA FORNITO UNA "Narrazione del Giocatore", ACCETTA E CONFERMA AL 100% QUANTO NARRATO DAL GIOCATORE!
+   - COMBATTIMENTO IN UN SOLO TIRO: Nel Chronica Engine NON esiste un secondo tiro per i danni né un tiro di assorbimento! Difesa e Armatura vengono sottratte direttamente dalla riserva d'attacco e OGNI SUCCESSO NETTO OTTENUTO INFLIGGE DIRETTAMENTE 1 PUNTO SALUTE DI DANNO (Contundente /, Letale X o Aggravato *).
 5. PREMIO PUNTI ESPERIENZA (XP) E COSTI DELLO SCHERMO:
    Quando il protagonista supera una prova critica, sconfigge un nemico o conclude una scena chiave, premialo con 1, 2 o 3 XP inserendo:
    [[XP: 2 | "Motivo del premio di esperienza"]]
@@ -1335,6 +1344,15 @@ REGOLE ESSENZIALI DI GIOCO:
    [[DANNO_GIOCATORE: {"points": 1, "type": "lethal", "reason": "Colpo subito"}]] (type: 'bashing', 'lethal', 'aggravated')
    oppure
    [[CURA_GIOCATORE: {"points": 1, "type": "bashing", "reason": "Bendaggio o riposo"}]]
+7.7. GESTIONE SALUTE A ZERO & "FAIL FORWARD" (SALVAGUARDIA DELLA CAMPAGNA E DEL CANOVACCIO):
+   Se durante la sessione i dadi girano malissimo e la Salute del protagonista scende a zero (tutte le caselle segnate):
+   - DIVIETO ASSOLUTO DI "GAME OVER" PIATTO O MORTE ISTANTANEA ARBITRARIA: troncare bruscamente la storia distruggerebbe il canovaccio dell'autore e il percorso del gruppo.
+   - Il protagonista crolla a terra PRIVO DI SENSI, IN STATO DI SHOCK, DISSANGUATO O AGONIZZANTE.
+   - Il Narratore crea immediatamente una SVOLTA DRAMMATICA che fa avanzare la trama ("Fail Forward"):
+     1. Se ci sono altri compagni al tavolo: chiama subito in causa gli altri giocatori per un intervento disperato (soccorso medico d'urgenza [Destrezza/Intelligenza + Medicina], trascinarlo al riparo sotto il fuoco nemico o coprire una ritirata disperata).
+     2. Se ci sono Comprimari o PNG alleati del cast: uno di loro compie un gesto eroico, un sacrificio personale o crea un diversivo clamoroso (esplosione, fumogeno, crollo, barriera) per permettere la fuga col compagno ferito.
+     3. Se non c'è possibilità di fuga immediata: i nemici NON lo giustiziano lì sul selciato; lo disarmano, lo incatenano e lo imprigionano per interrogarlo o condurlo al cospetto del loro leader. Si apre così un nuovo snodo avvincente (evasione dalle celle, risveglio medicato da un misterioso alleato, trattativa disperata) perfettamente coerente con la trama!
+   - La sconfitta costa cara (perdita di armi/oggetti preziosi, cicatrici permanenti, tempo perso), ma la storia continua!
 8. TABELLE DELLO SCHERMO DEL NARRATORE (ARMI, ARMATURE, ESPLOSIVI, PERICOLI E MORALITÀ):
    - Iniziativa: 1d10 + Destrezza + Autocontrollo. Difesa: min(Destrezza, Prontezza). Schivare raddoppia la Difesa. Attacco Impetuoso dà +2 ma toglie la Difesa.
    - Occultamento: Scarso -1, Parziale -2, Considerevole -3, Copertura Piena blocca i colpi. Bersaglio Specifico: Torso -1, Arto -2, Testa -3, Mano -4, Occhio -5. Gittata: Media -2, Lunga -4.
@@ -1352,15 +1370,24 @@ REGOLE ESSENZIALI DI GIOCO:
      • Mutaforma / Primordiale ('werewolf'): Istinto primordiale ed energia ferina; può assumere forme di guerra/predazione, rigenera danni fisici e risente di debolezze specifiche (es. metalli rari, legami totemici).
      • Canalizzatore / Arcano ('mage'): Manipola correnti invisibili della realtà, energie o forze psioniche/arcane attraverso formule, innesti o concentrazione.
    - SUI PNG E NEMICI: Modella gli avversari in piena coerenza con l'ambientazione e l'epoca storica della cronaca (che sia Fantasy, Far West, Cyberpunk, Noir o Horror). Non forzare elementi gotici se l'ambientazione è Western, Sci-Fi o Storica!
-8.6. SISTEMA DI SCONTRO E NEMICI A 2 MODALITÀ (OSTACOLO IN CORSA vs COMBATTIMENTO TATTICO CON SALUTE REALE):
+8.6. SISTEMA DI SCONTRO, BOSS D'ÉLITE E OSTACOLI RAPIDI (VARIETÀ & ALTO LIVELLO NARRATIVO):
    - MODALITÀ A — OSTACOLO RAPIDO IN CORSA (Tira i dadi SOLO il Giocatore):
-     Quando il giocatore sta inseguendo qualcuno o fuggendo e incontra guardie di sbarramento, scagnozzi che coprono una ritirata o un blocco da sfondare al volo senza fermarsi in un combattimento turno per turno, attiva l'Ostacolo inserendo a fine risposta:
-     [[OSTACOLO: {"name": "Guardie del Sotterraneo", "successesNeeded": 2, "penaltyDamageOnFail": 1, "attribute": "Forza", "ability": "Lotta"}]]
-     REGOLA FERREA DELL'OSTACOLO: Finché il giocatore non accumula tutti i successi richiesti (ti verrà segnalato nel prompt), VIETATO FARLO PASSARE OLTRE! Se ottiene 0 successi o successi parziali, le guardie/ostacolo lo tengono ancora bloccato lì finché non supera la soglia!
-   - MODALITÀ B — COMBATTIMENTO TATTICO COMPLETO (Iniziativa, Barra Salute Nemico e Tiri del Narratore):
-     Quando inizia un vero combattimento diretto contro un avversario importante, un mostro o un Boss (e non è già presente in campo), genera la sua Mini-Scheda inserendo a fine risposta:
-     [[NEMICO: {"name": "Nome Avversario", "creatureType": "vampire", "maxHealth": 8, "defense": 3, "armor": 1, "initiativeMod": 6, "attackPool": 8, "attackName": "Artigli / Pistola", "damageType": "lethal"}]]
-     DIVIETO ASSOLUTO DI UCCIDERE UN NEMICO CON UN SOLO COLPO: I nemici hanno da 7 a 12 caselle Salute! Quando il giocatore colpisce un nemico, ti verrà comunicata la sua Salute residua esatta (es. "5/8 caselle integre"). Finché la Salute del nemico è > 0, È TASSATIVAMENTE VIETATO NARRARE CHE IL NEMICO MUORE O VIENE SCONFITTO! Descrivi il colpo andato a segno e il sangue, ma il nemico resta in piedi a combattere finché le sue caselle Salute non scendono a 0!
+     Quando i protagonisti affrontano inseguimenti, sbarramenti o guardie di pattuglia da superare al volo senza fermarsi in un duello turno per turno, attiva l'Ostacolo con:
+     [[OSTACOLO: {"name": "Sbarramento Guardie della Fortezza", "successesNeeded": 2, "penaltyDamageOnFail": 1, "attribute": "Forza", "ability": "Lotta"}]]
+     • PROPORZIONATO E CREDIBILE: Nella fortezza del tiranno le guardie non sono straccioni con scope! Sono sentinelle d'élite in cotta di maglia/armatura pesante, scudi torre e alabarde.
+     • REGOLA FERREA DELL'OSTACOLO: Finché il giocatore non accumula tutti i successi richiesti, VIETATO FARLO PASSARE! Se fallisce il tiro, subisce il danno di penalità e resta bloccato finché non supera la soglia con un nuovo tiro.
+   - MODALITÀ B — BOSS E NEMICI D'ÉLITE (Mini-Scheda con Salute Reale e Abilità Uniche):
+     Quando inizia un vero scontro contro un avversario importante, un comandante, un mostro d'élite o un Boss di fine capitolo (e non è già presente in campo), genera la sua Mini-Scheda inserendo:
+     [[NEMICO: {"name": "Nome Boss / Comandante", "creatureType": "vampire", "maxHealth": 10, "defense": 3, "armor": 2, "initiativeMod": 7, "attackPool": 8, "attackName": "Sciabola d'Acciaio Damasco / Fucile a Canne Mozze", "damageType": "lethal", "notes": "Abilità Speciale Unica da cooperativa"}]]
+     • DIVIETO DI ARMI RIDICOLE O BANALI: MAI un Boss armato di un semplice pugnaletto da 4 soldi! Deve avere armi iconiche, storiche, forgiate o modificate coerenti con la sua statura (es. spadoni a due mani runici, sciabole decorate, revolver a canna pesante rinforzato con munizioni a punta cava, katane dei maestri, balestre pesanti d'acciaio).
+     • ABILITÀ SPECIALI DA COOPERATIVA: Ogni Boss possiede 1 o 2 capacità tattiche uniche riportate in "notes" (es. "Riflesso di Contrattacco: contrattacca automaticamente a chi lo manca in mischia", "Cortina Fumogena: sparisce nelle ombre raddoppiando la Difesa", "Corazza Runica/Kevlar: dimezza i danni da fuoco leggero finché non viene sfondata alle spalle", "Tossina Paralizzante: toglie 2 dadi su ferita", "Richiamo Sgherri al 50% di salute").
+     • COOPERAZIONE OBBLIGATORIA: L'abilità deve costringere i giocatori a unire le forze e coordinarsi (uno crea un diversivo, uno blocca la mobilità, l'altro colpisce il punto debole), premiando l'ingegno del gruppo.
+     • DIVIETO ASSOLUTO DI UCCIDERE UN NEMICO CON UN SOLO COLPO: I nemici importanti hanno da 7 a 12 caselle Salute! Quando il giocatore colpisce un nemico, ti verrà comunicata la sua Salute residua esatta (es. "5/8 caselle integre"). Finché la Salute del nemico è > 0, È TASSATIVAMENTE VIETATO NARRARE CHE IL NEMICO MUORE O VIENE SCONFITTO! Descrivi il colpo andato a segno e il sangue, ma il nemico resta in piedi a combattere finché le sue caselle Salute non scendono a 0!
+   - VARIETÀ TATTICA NEI NEMICI ORDINARI E SCONTRI MULTIPLI:
+     • MAI nemici fotocopia tutti armati allo stesso modo (vietato fare 4 guardie tutte con la sola spada o la sola pistola).
+     • Mescola sempre ruoli tattici: fanti da mischia con scudo e corazza in prima linea, tiratori/balestrieri con coperture da distanza, assalitori veloci sui fianchi con armi da getto o granate/molotov.
+   - CURA ED ECCELLENZA PER GLI ALLEATI E COMPRIMARI:
+     • Gli alleati al fianco del gruppo (PNG del cast o personaggi secondari) non sono comparse inerti: hanno le loro armi personali, stile di combattimento, virtù e difetti, e supportano la squadra con coerenza senza rubare la scena agli eroi.
 9. CHIUSURA COMPLETA DELLA FRASE:
    Termina SEMPRE l'ultimo paragrafo con una frase compiuta e un punto fermo prima dei tag speciali.
 10. Includi SEMPRE alla fine il blocco con 3 o 4 opzioni contestuali per la prossima mossa:
@@ -1468,6 +1495,19 @@ L'IA Narratore DEVE dare vita attivamente a questi personaggi nel mondo di gioco
 `
           : '';
 
+        let activeCombatBlock = '';
+        if (Array.isArray(activeEnemies) && activeEnemies.length > 0) {
+          activeCombatBlock = `\n========================================================================\n⚔️ NEMICI ATTIVAMENTE PRESENTI IN COMBATTIMENTO SUL CAMPO (${activeEnemies.length}):\n` +
+            activeEnemies.map((e) => {
+              const undamaged = Array.isArray(e.health) ? e.health.filter((h) => !h.marked).length : e.maxHealth;
+              return `- ${e.name} (${e.creatureType || 'avversario'}): Salute ${undamaged}/${e.maxHealth} integre | Difesa ${e.defense} | Armatura ${e.armor} | Attacco: ${e.attackName || 'Arma'} (Riserva ${e.attackPool} d10, danno ${e.damageType || 'lethal'})${e.notes ? ` | Tratto Speciale: ${e.notes}` : ''}`;
+            }).join('\n') +
+            `\nSe il protagonista fallisce un tiro o si sbilancia contro di loro, il nemico attivo coglie l'apertura e contrattacca calcolando i propri dadi!\n========================================================================\n`;
+        }
+        if (activeObstacle && !activeObstacle.resolved) {
+          activeCombatBlock += `\n🚧 OSTACOLO / SBARRAMENTO ATTIVO IN CORSO: "${activeObstacle.name}" - Richiede ${activeObstacle.successesNeeded} successi (Attuali: ${activeObstacle.currentSuccesses || 0}/${activeObstacle.successesNeeded}). Finché la soglia non è raggiunta, l'ostacolo blocca il passaggio!\n`;
+        }
+
         const userPrompt = `
 CONTESTO CRONACA:
 - Titolo: ${campaign.title} | Epoca: ${campaign.eraLabel || campaign.era} | Luogo: ${campaign.city}
@@ -1476,6 +1516,7 @@ CONTESTO CRONACA:
 ${storyOutlineBlock}
 
 ${unchosenCastBlock}
+${activeCombatBlock}
 - Salute: ${actingChar?.healthLevels ? actingChar.healthLevels.filter((h) => !h.marked).length + '/' + actingChar.healthLevels.length : 'Buona'}
 - Psicologia: Virtù ${actingChar?.virtue || actingChar?.nature || 'Prudenza'}, Vizio ${actingChar?.vice || actingChar?.demeanor || 'Orgoglio'} | Moralità: ${actingChar?.morality ?? 7}
 - Attributi (3x3): Mentali [Intelligenza ${actingChar?.attributes?.intelligence || 2}, Prontezza ${actingChar?.attributes?.wits || 2}, Fermezza ${actingChar?.attributes?.resolve || 2}] | Fisici [Forza ${actingChar?.attributes?.strength || 2}, Destrezza ${actingChar?.attributes?.dexterity || 2}, Costituzione ${actingChar?.attributes?.stamina || 2}] | Sociali [Presenza ${actingChar?.attributes?.presence || 2}, Ascendente ${actingChar?.attributes?.manipulation || 2}, Autocontrollo ${actingChar?.attributes?.composure || 2}]
