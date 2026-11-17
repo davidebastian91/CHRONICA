@@ -14,7 +14,6 @@ import {
   Skull,
   User,
   Dices,
-  Swords,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -55,7 +54,6 @@ export const CombatInitiativeBar: React.FC<CombatInitiativeBarProps> = ({
   roundNumber,
   initiativeOrder,
   activeCombatantId,
-  connectedPlayersCount,
   activeEnemies,
   activeObstacle,
   playerName,
@@ -121,6 +119,10 @@ export const CombatInitiativeBar: React.FC<CombatInitiativeBarProps> = ({
     setShowAddEnemy(false);
   };
 
+  if (!isCombatActive && (!activeObstacle || activeObstacle.resolved)) {
+    return null;
+  }
+
   return (
     <div className="max-w-5xl mx-auto w-full mb-2 space-y-2 shrink-0">
       {/* 1. OSTACOLO IN CORSA (INSEGUIMENTI / SFONDAMENTI) */}
@@ -172,28 +174,9 @@ export const CombatInitiativeBar: React.FC<CombatInitiativeBarProps> = ({
         </div>
       )}
 
-      {/* 2. BARRA DI GIOCO */}
-      {!isCombatActive ? (
-        <div className="bg-slate-950/90 border border-slate-800 rounded-xl px-3.5 py-2 shadow-sm flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center space-x-2 text-xs font-mono text-slate-400">
-            <Swords className="w-3.5 h-3.5 text-amber-400" />
-            <span>
-              Fase Narrativa Libera
-              {connectedPlayersCount > 0 ? ` • ${connectedPlayersCount + 1} Eroi al Tavolo` : ''}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={onStartCombatAndRoll}
-            className="px-3 py-1.5 bg-gradient-to-r from-amber-700 via-red-800 to-slate-900 hover:from-amber-600 border border-amber-500/70 text-amber-100 font-serif font-bold text-xs rounded-lg shadow transition-all flex items-center space-x-1.5 cursor-pointer"
-            title="Attiva lo scontro con iniziativa e schede salute dei nemici"
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-300" />
-            <span>⚔️ Inizia Combattimento</span>
-          </button>
-        </div>
-      ) : isInitiativePending ? (
+      {/* 2. BARRA COMBATTIMENTO ATTIVO */}
+      {isCombatActive && (
+        isInitiativePending ? (
         /* FASE D'INIZIATIVA (I GIOCATORI TIRANO I DADI) */
         <div className="bg-slate-950/95 border-2 border-amber-500/80 rounded-xl p-3 shadow-xl space-y-2.5 animate-fadeIn">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-600/40 pb-2">
@@ -514,6 +497,7 @@ export const CombatInitiativeBar: React.FC<CombatInitiativeBarProps> = ({
             </form>
           )}
         </div>
+        )
       )}
     </div>
   );

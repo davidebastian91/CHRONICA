@@ -211,7 +211,7 @@ export const StoryFeed: React.FC<StoryFeedProps> = ({
           return (
             <div
               key={msg.id}
-              className={`flex flex-col ${isPlayer ? 'items-end' : 'items-start'}`}
+              className={`flex flex-col w-full ${isPlayer ? 'items-end' : 'items-start'}`}
             >
               {/* Header messaggio */}
               <div className="flex items-center space-x-2 mb-1.5 px-1 text-xs font-mono text-slate-400 uppercase">
@@ -348,14 +348,14 @@ export const StoryFeed: React.FC<StoryFeedProps> = ({
 
               {/* Corpo Messaggio */}
               <div
-                className={`max-w-3xl rounded-2xl p-5 sm:p-6 text-base sm:text-lg leading-relaxed shadow-lg ${
+                className={`rounded-2xl p-5 sm:p-6 text-base sm:text-lg leading-relaxed shadow-lg ${
                   msg.isClarification
-                    ? 'bg-slate-950/95 border-2 border-cyan-800/80 shadow-cyan-950/40 text-slate-200'
+                    ? 'w-full bg-slate-950/95 border-2 border-cyan-800/80 shadow-cyan-950/40 text-slate-200'
                     : isNarrator
-                    ? 'bg-slate-950/85 border border-slate-800 text-slate-200 font-serif'
+                    ? 'w-full bg-slate-950/85 border border-slate-800 text-slate-200 font-serif'
                     : isPlayer
-                    ? 'bg-indigo-950/40 border border-indigo-900/60 text-slate-100 font-sans'
-                    : 'bg-slate-900/40 border border-slate-800/40 text-slate-400 text-sm font-mono'
+                    ? 'max-w-2xl sm:max-w-3xl bg-indigo-950/40 border border-indigo-900/60 text-slate-100 font-sans'
+                    : 'w-full bg-slate-900/40 border border-slate-800/40 text-slate-400 text-sm font-mono'
                 }`}
               >
                 {msg.isClarification ? (
