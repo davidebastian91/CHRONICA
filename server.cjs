@@ -197,6 +197,25 @@ function safeParseJsonArray(raw) {
   throw new Error('Impossibile estrarre personaggi validi dal formato restituito.');
 }
 
+function safeParseJsonObject(raw) {
+  if (!raw) return null;
+  let cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {}
+  try {
+    const cleanedTrailing = cleaned.replace(/,\s*([}\]])/g, '$1');
+    return JSON.parse(cleanedTrailing);
+  } catch {}
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (match) {
+    try {
+      return JSON.parse(match[0].replace(/,\s*([}\]])/g, '$1'));
+    } catch {}
+  }
+  return null;
+}
+
 async function callGemini(promptText, systemInstruction, options = {}) {
   const maxTokens = options.maxTokens || 4000;
   const temp = options.temperature !== undefined ? options.temperature : 0.82;
@@ -920,6 +939,102 @@ Rispondi ESCLUSIVAMENTE con un JSON valido con questa struttura esatta:
         console.error('Errore /api/ai/analyze-story-outline:', err);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // API 2b: Atelier della Trama / Story Forge (Compilatore Trama & Cast da Testo Libero)
+  if (pathname === '/api/ai/forge-story' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (chunk) => (body += chunk));
+    req.on('end', async () => {
+      try {
+        const { storyText, charactersText } = JSON.parse(body);
+        if (!storyText || storyText.trim().length < 15) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Testo della storia troppo breve per l\'elaborazione.' }));
+          return;
+        }
+
+        const systemPrompt = `Sei il Capo Sceneggiatore e Regista del motore di gioco Chronica D10 RPG.
+Un autore/master ti fornisce la bozza di un'avventura, appunti sparsi, un capitolo di romanzo o un canovaccio, con eventuali note sui personaggi.
+Il tuo compito è elaborare questo materiale e compilarlo nella "BIBBIA DI REGIA DELLA CRONACA", strutturata con precisione per guidare il Narratore IA durante le sessioni interattive.
+
+REGOLE CRITICHE DI COMPILAZIONE:
+1. TITOLO & AMBIENTAZIONE:
+   - "title": Titolo evocativo e cinematografico in italiano (max 5-6 parole).
+   - "location": Città, regno, contea o luogo principale dove si svolge la vicenda (es. "Regno di Aethelgard", "Fortezza di Grigioferro", "Tombstone", "Chang'an", ecc.). MAI usare Tombstone se non è un western!
+   - "era": Scegli esattamente una tra: "wild_west", "feudal_japan", "imperial_china", "high_fantasy", "pirates", "ancient", "modern", "cyberpunk", "victorian", "custom".
+   - "customEraDescription": Breve descrizione d'impatto dell'ambientazione storica o fantastica.
+   - "initialLight": Una tra "noon", "sunset", "dawn", "night", "dynamic".
+
+2. SCHEMA A TRE ATTI DELLA TRAMA ("storyOutline"):
+   Struttura la storia in formato Markdown chiaro con queste sezioni precise:
+   ### PREMESSA & INCIPIT
+   La situazione di partenza, l'atmosfera e il punto esatto in cui inizia la prima scena giocabile.
+   ### ATTO I: INIZIO & PRIMO BIVIO
+   La minaccia iniziale o l'ingaggio, cosa i personaggi scoprono subito e le prime scelte tattiche.
+   ### ATTO II: INDAGINE, INCOGNITE E COLPI DI SCENA
+   I luoghi da esplorare, gli indizi chiave da rivelare progressivamente (solo con successi nei tiri), le imboscate o tradimenti.
+   ### ATTO III: CLIMAX & CONFRONTO FINALE
+   Il confronto decisivo, la verità svelata, e le condizioni di vittoria o sconfitta.
+   ### DIRETTIVE SEGRETE PER IL NARRATORE IA
+   - SEGRETI DA NON RIVELARE SUBITO: Cosa tenere nascosto fino al momento opportuno.
+   - REGOLE DI TONO: Atmosfera narrativa e ritmo cinematografico.
+   - MINACCE E PNG OSTILI: Principali nemici o boss con le loro motivazioni.
+
+3. PERSONAGGI E CAST ("characters"):
+   Estrai o crea i personaggi del Cast (protagonisti o comprimari menzionati nel testo o nelle note).
+   Per ciascuno fornisci:
+   - "id": id univoco (es. "char_1", "char_2")
+   - "name": Nome completo
+   - "concept": Archetipo / Ruolo narrativo (es. Mago Guerriero, Mercenario, Medico da Campo)
+   - "factionOrClan": Fazione, casata o alleanza
+   - "virtue": Virtù (Giustizia, Fortezza, Prudenza, Speranza, Temperanza, Fede, Carità)
+   - "vice": Vizio (Ira, Orgoglio, Avarizia, Superbia, Invidia, Gola, Pigrizia)
+   - "morality": 7
+   - "attributes": { "intelligence": 2, "wits": 2, "resolve": 2, "strength": 2, "dexterity": 2, "stamina": 2, "presence": 2, "manipulation": 2, "composure": 2 }
+   - "abilities": oggetto con abilità (valori da 1 a 5, es. weaponry, firearms, athletics, occult, medicine, stealth, etc.)
+   - "inventory": array di 3-4 oggetti o armi coerenti
+   - "backgroundNotes": Sintesi del background, carattere e motivazioni.
+
+4. TESTO COMPLETO FORMATTATO ("fullExportText"):
+   Un documento testuale completo in formato Markdown leggibile ed esportabile come file di testo, con Titolo, Epoca, Luogo, Sinossi, Trama a 3 Atti, Direttive e Schede dei Personaggi.
+
+Rispondi ESCLUSIVAMENTE con un JSON valido con questa struttura esatta:
+{
+  "title": "...",
+  "location": "...",
+  "era": "...",
+  "customEraDescription": "...",
+  "initialLight": "...",
+  "summary": "...",
+  "storyOutline": "...",
+  "characters": [ ... ],
+  "fullExportText": "..."
+}`;
+
+        const userPrompt = `TESTO DELLA STORIA / CANOVACCIO:\n"""\n${storyText.substring(0, 60000)}\n"""\n\n` +
+          (charactersText && charactersText.trim() ? `NOTE AGGIUNTIVE SUI PERSONAGGI:\n"""\n${charactersText.substring(0, 30000)}\n"""\n` : '');
+
+        const rawAiRes = await callGemini(userPrompt, systemPrompt, {
+          maxTokens: 16000,
+          temperature: 0.3,
+          isJson: true,
+        });
+
+        const parsed = safeParseJsonObject(rawAiRes);
+        if (!parsed || !parsed.title) {
+          throw new Error('Impossibile interpretare la risposta dell\'IA');
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(parsed));
+      } catch (err) {
+        console.error('Errore /api/ai/forge-story:', err);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message || 'Errore durante l\'elaborazione della storia' }));
       }
     });
     return;

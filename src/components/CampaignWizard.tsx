@@ -40,7 +40,9 @@ import {
   CheckCircle2,
   MapPin,
   Trash2,
+  Wand2,
 } from 'lucide-react';
+import { StoryForgeModal, type ForgedStoryResult } from './StoryForgeModal';
 
 interface CampaignWizardProps {
   onStartCampaign: (config: CampaignConfig, character: Character | null, initialHook?: string) => void;
@@ -120,6 +122,58 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
   const [isExtractingCast, setIsExtractingCast] = useState(false);
   const [castExtractError, setCastExtractError] = useState<string | null>(null);
   const [selectedCastCharId, setSelectedCastCharId] = useState<string | null>(null);
+  const [isStoryForgeOpen, setIsStoryForgeOpen] = useState(false);
+
+  const handleApplyForgedStory = (forged: ForgedStoryResult) => {
+    if (forged.title) setTitle(forged.title);
+    if (forged.location) setCity(forged.location);
+    if (forged.era) {
+      if (forged.era === 'custom') {
+        setEra('custom');
+        if (forged.customEraDescription) setCustomEraInput(forged.customEraDescription);
+      } else {
+        setEra(forged.era);
+        if (forged.customEraDescription) setCustomEraInput(forged.customEraDescription);
+      }
+    }
+    if (forged.initialLight) setTimeOfDay(forged.initialLight);
+    if (forged.summary) setCustomPlot(forged.summary);
+    if (forged.storyOutline) {
+      setStoryOutlineContent(forged.storyOutline);
+      setStoryOutlineFileName('Bibbia_Regia_Atelier.txt');
+      setOutlineAnalysisNotice(
+        `✨ Cronaca "${forged.title}" compilata con successo dall'Atelier della Trama!`
+      );
+    }
+
+    if (forged.characters && Array.isArray(forged.characters) && forged.characters.length > 0) {
+      const activeEra = forged.era || era;
+      const chars: Character[] = forged.characters.map((ch: any) => {
+        const gearIds = deduceStartingGearForCastCharacter(ch, activeEra);
+        const gearOptions = ALL_STORYTELLER_GEAR_OPTIONS.filter((g) => gearIds.includes(g.id));
+        const structuredFromGear = gearOptions.map(convertGearOptionToInventoryItem);
+
+        const hasCustomItems = Array.isArray(ch.structuredInventory) && ch.structuredInventory.length > 0;
+        const finalStructured = hasCustomItems ? ch.structuredInventory : structuredFromGear;
+        const finalInventory = hasCustomItems ? ch.inventory : structuredFromGear.map((i) => i.name);
+
+        return {
+          ...ch,
+          id: ch.id || `char_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          structuredInventory: finalStructured,
+          inventory: finalInventory,
+        };
+      });
+
+      setWizardRoster(chars);
+      if (!isSpectatorHost && chars[0]) {
+        handleApplyCastCharacter(chars[0]);
+      }
+    }
+
+    // Porta direttamente al passaggio di riepilogo finale (Step 4)
+    setWizardStep(4);
+  };
 
   const analyzeStoryOutlineText = async (textToAnalyze: string) => {
     if (!textToAnalyze || textToAnalyze.trim().length < 25) return;
@@ -828,6 +882,14 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
               <Sparkles className="w-4 h-4 text-amber-300" />
               <span>Scenari Pronti & Sandbox</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setIsStoryForgeOpen(true)}
+              className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold uppercase tracking-wider transition-all flex items-center justify-center space-x-2 cursor-pointer bg-gradient-to-r from-purple-950/90 to-indigo-950/90 hover:from-purple-900 hover:to-indigo-900 border border-purple-500/70 text-purple-200 shadow-md"
+            >
+              <Wand2 className="w-4 h-4 text-purple-300 animate-pulse" />
+              <span>🪄 Atelier Trama & Cast</span>
+            </button>
             {onOpenLoadChronicle && (
               <button
                 type="button"
@@ -1141,16 +1203,27 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                       </div>
                     </div>
 
-                    <label className="px-3.5 py-1.5 bg-purple-950 hover:bg-purple-900 border border-purple-600/80 rounded-xl text-xs font-serif font-bold text-purple-200 flex items-center space-x-1.5 cursor-pointer transition-colors shadow">
-                      <Upload className="w-3.5 h-3.5 text-purple-300" />
-                      <span>{storyOutlineFileName ? 'Sostituisci File' : 'Carica File Trama (.docx, .txt, .xlsx)'}</span>
-                      <input
-                        type="file"
-                        accept=".docx,.doc,.xlsx,.xls,.csv,.txt,.md"
-                        onChange={handleOutlineFileUpload}
-                        className="hidden"
-                      />
-                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsStoryForgeOpen(true)}
+                        className="px-3.5 py-1.5 bg-gradient-to-r from-purple-800 to-indigo-800 hover:from-purple-700 border border-purple-500/80 rounded-xl text-xs font-serif font-bold text-white flex items-center space-x-1.5 cursor-pointer transition-all shadow"
+                      >
+                        <Wand2 className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                        <span>🪄 Atelier Trama (Compila con IA)</span>
+                      </button>
+
+                      <label className="px-3.5 py-1.5 bg-purple-950 hover:bg-purple-900 border border-purple-600/80 rounded-xl text-xs font-serif font-bold text-purple-200 flex items-center space-x-1.5 cursor-pointer transition-colors shadow">
+                        <Upload className="w-3.5 h-3.5 text-purple-300" />
+                        <span>{storyOutlineFileName ? 'Sostituisci File' : 'Carica File Trama (.docx, .txt)'}</span>
+                        <input
+                          type="file"
+                          accept=".docx,.doc,.xlsx,.xls,.csv,.txt,.md"
+                          onChange={handleOutlineFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   {isExtractingOutline && (
@@ -2785,6 +2858,13 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
           </div>
         )}
       </div>
+
+      {/* Modale Atelier della Trama & Cast */}
+      <StoryForgeModal
+        isOpen={isStoryForgeOpen}
+        onClose={() => setIsStoryForgeOpen(false)}
+        onApplyToCampaign={handleApplyForgedStory}
+      />
     </div>
   );
 };
