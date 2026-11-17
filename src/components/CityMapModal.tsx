@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, MapPin, Trash2, Compass, Upload, Navigation, Loader2, Plus } from 'lucide-react';
+import { X, MapPin, Trash2, Compass, Upload, Navigation, Loader2, Plus, Landmark } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { CampaignConfig, CampaignMap } from '../types';
+import type { CampaignConfig, CampaignMap, CityDistrict } from '../types';
 import { compressMapImage, safeLocalStorageSet } from '../utils/mapStorage';
+import { generateThematicDistricts } from '../utils/districtGenerator';
+import { ThematicDistrictMapView } from './ThematicDistrictMapView';
 
 interface MapMarker {
   id: string;
@@ -23,6 +25,8 @@ interface CityMapModalProps {
   era: string;
   campaign?: CampaignConfig;
   onUpdateMaps?: (maps: CampaignMap[], activeMapId?: string) => void;
+  onUpdateDistricts?: (districts: CityDistrict[], activeDistrictId?: string) => void;
+  onSendPlayerAction?: (actionText: string) => void;
 }
 
 type TileLayerStyle = 'dark' | 'osm' | 'satellite';
@@ -77,22 +81,41 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
   era,
   campaign,
   onUpdateMaps,
+  onUpdateDistricts,
+  onSendPlayerAction,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const activeTileLayerRef = useRef<L.TileLayer | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
+  // Gestione Distretti Dinamici
+  const [districts, setDistricts] = useState<CityDistrict[]>(() => {
+    if (campaign?.cityDistricts && campaign.cityDistricts.length > 0) {
+      return campaign.cityDistricts;
+    }
+    const saved = localStorage.getItem(`chronica_districts_${cityName}_${era}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {}
+    }
+    return generateThematicDistricts(era, cityName);
+  });
+
+  const [activeDistrictId, setActiveDistrictId] = useState<string>(() => {
+    return campaign?.activeDistrictId || districts[0]?.id || '';
+  });
+
   const campaignMaps = campaign?.maps || [];
-  const [selectedMapId, setSelectedMapId] = useState<string | 'osm' | 'legacy_custom'>(() => {
+  const [selectedMapId, setSelectedMapId] = useState<string | 'districts' | 'osm' | 'legacy_custom'>(() => {
     if (campaign?.activeMapId && campaignMaps.some((m) => m.id === campaign.activeMapId)) {
       return campaign.activeMapId;
     }
     if (campaignMaps.length > 0) {
       return campaignMaps[0].id;
     }
-    const legacy = localStorage.getItem(`chronica_custom_map_${cityName}`);
-    return legacy ? 'legacy_custom' : 'osm';
+    return 'districts'; // DEFAULT: Mappa a Distretti viva e tematica
   });
 
   const [tileStyle, setTileStyle] = useState<TileLayerStyle>('dark');
@@ -111,9 +134,13 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
   const currentImageUrl = activeCampaignMap?.imageUrl || (selectedMapId === 'legacy_custom' ? customMapUrl : null);
   const isViewingImage = Boolean(currentImageUrl);
 
-  const mapMode: 'osm' | 'custom' = selectedMapId === 'osm' ? 'osm' : 'custom';
-  const setMapMode = (mode: 'osm' | 'custom') => {
-    if (mode === 'osm') {
+  const mapMode: 'districts' | 'osm' | 'custom' =
+    selectedMapId === 'districts' ? 'districts' : selectedMapId === 'osm' ? 'osm' : 'custom';
+
+  const setMapMode = (mode: 'districts' | 'osm' | 'custom') => {
+    if (mode === 'districts') {
+      setSelectedMapId('districts');
+    } else if (mode === 'osm') {
       setSelectedMapId('osm');
     } else if (campaignMaps.length > 0) {
       setSelectedMapId(campaignMaps[0].id);
@@ -453,25 +480,42 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
               </div>
             )}
 
-            {/* Switch Modalità: OSM vs Immagine Custom */}
+            {/* Switch Modalità: Distretti d'Epoca vs Mappe Immagine vs OSM */}
             <div className="bg-slate-950 border border-slate-800 rounded-xl p-1 flex space-x-1 text-xs">
               <button
                 type="button"
-                onClick={() => setMapMode('osm')}
-                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  mapMode === 'osm' ? 'bg-indigo-900 text-white font-bold' : 'text-slate-400 hover:text-white'
+                onClick={() => setMapMode('districts')}
+                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  mapMode === 'districts'
+                    ? 'bg-amber-600 text-slate-950 font-black shadow-md'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Mappa Reale
+                <Landmark className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Distretti d'Epoca</span>
+                <span className="sm:hidden">Distretti</span>
               </button>
               <button
                 type="button"
                 onClick={() => setMapMode('custom')}
-                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
                   mapMode === 'custom' ? 'bg-indigo-900 text-white font-bold' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Mappa Custom
+                <Compass className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Mappe Immagine</span>
+                <span className="sm:hidden">Immagini</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapMode('osm')}
+                className={`px-3 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  mapMode === 'osm' ? 'bg-emerald-900 text-white font-bold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Navigation className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Mappa Reale OSM</span>
+                <span className="sm:hidden">OSM</span>
               </button>
             </div>
 
@@ -487,6 +531,23 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
         {/* Barra di Navigazione Multi-Mappa */}
         <div className="bg-slate-950/95 border-b border-slate-800 px-4 py-2 flex items-center justify-between gap-3 overflow-x-auto shrink-0 select-none">
           <div className="flex items-center space-x-2 shrink-0">
+            {/* Tab Distretti d'Epoca Dinamici */}
+            <button
+              type="button"
+              onClick={() => setSelectedMapId('districts')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-serif transition-all cursor-pointer ${
+                selectedMapId === 'districts'
+                  ? 'bg-amber-950/90 border-amber-500 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+              }`}
+            >
+              <Landmark className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="font-bold">Distretti: {cityName}</span>
+              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded font-mono bg-amber-500/20 text-amber-300 font-bold">
+                Interattiva
+              </span>
+            </button>
+
             {campaignMaps.map((m) => {
               const isSelected = selectedMapId === m.id;
               const isGeneral = m.category === 'general';
@@ -574,7 +635,34 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
           {/* Mappa visualizzata */}
           <div className="flex-1 bg-slate-950 relative overflow-hidden flex items-center justify-center">
-            {selectedMapId === 'osm' ? (
+            {selectedMapId === 'districts' ? (
+              <ThematicDistrictMapView
+                districts={districts}
+                activeDistrictId={activeDistrictId}
+                onSelectActiveDistrict={(dId) => {
+                  setActiveDistrictId(dId);
+                  if (onUpdateDistricts) {
+                    onUpdateDistricts(districts, dId);
+                  }
+                }}
+                onUpdateDistrictAlert={(dId, alert) => {
+                  const updated = districts.map((d) => (d.id === dId ? { ...d, alertLevel: alert } : d));
+                  setDistricts(updated);
+                  safeLocalStorageSet(`chronica_districts_${cityName}_${era}`, JSON.stringify(updated));
+                  if (onUpdateDistricts) {
+                    onUpdateDistricts(updated, activeDistrictId);
+                  }
+                }}
+                onFastTravelAction={(actionText) => {
+                  onClose();
+                  if (onSendPlayerAction) {
+                    onSendPlayerAction(actionText);
+                  }
+                }}
+                era={era}
+                cityName={cityName}
+              />
+            ) : selectedMapId === 'osm' ? (
               <div
                 ref={mapContainerRef}
                 className="w-full h-full min-h-[400px] z-10"
@@ -620,20 +708,23 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
               </div>
             ) : (
               <div className="text-center p-8 max-w-md">
-                <Upload className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <h4 className="font-serif font-bold text-lg text-slate-200">Nessuna Mappa Personalizzata</h4>
+                <Landmark className="w-12 h-12 text-amber-500/80 mx-auto mb-3" />
+                <h4 className="font-serif font-bold text-lg text-slate-200">Nessuna Immagine Caricata</h4>
                 <p className="text-xs text-slate-400 mt-1 mb-4">
-                  Carica la mappa generale del regno/mondo o la mappa di un luogo specifico (locanda, fortezza, catacombe, dungeon).
+                  Puoi visualizzare la Mappa a Distretti d'Epoca interattiva generata per la tua ambientazione, oppure caricare una tua illustrazione.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                  <label className="px-4 py-2 bg-amber-950/60 hover:bg-amber-900/60 border border-amber-800/80 text-amber-200 rounded-xl text-xs font-semibold cursor-pointer inline-flex items-center justify-center space-x-1.5">
-                    <Compass className="w-4 h-4 text-amber-400" />
-                    <span>Carica Mappa Generale</span>
-                    <input type="file" accept="image/*" onChange={(e) => handleAddNewMap(e, 'general')} className="hidden" />
-                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMapId('districts')}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 rounded-xl text-xs font-serif font-black inline-flex items-center justify-center space-x-1.5 shadow-md cursor-pointer"
+                  >
+                    <Landmark className="w-4 h-4" />
+                    <span>Apri Mappa a Distretti</span>
+                  </button>
                   <label className="px-4 py-2 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/80 text-indigo-200 rounded-xl text-xs font-semibold cursor-pointer inline-flex items-center justify-center space-x-1.5">
                     <MapPin className="w-4 h-4 text-indigo-400" />
-                    <span>Carica Mappa di un Luogo</span>
+                    <span>Carica Mappa Immagine</span>
                     <input type="file" accept="image/*" onChange={(e) => handleAddNewMap(e, 'location')} className="hidden" />
                   </label>
                 </div>
@@ -649,55 +740,56 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
             )}
           </div>
 
-          {/* Sidebar Luoghi Chiave */}
-          <div className="w-full md:w-80 bg-slate-900/95 border-t md:border-t-0 md:border-l border-slate-800 p-4 flex flex-col shrink-0 overflow-y-auto z-20">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-slate-200 flex items-center space-x-1.5">
-                <MapPin className="w-3.5 h-3.5 text-red-500" />
-                <span>Punti di Interesse ({markers.length})</span>
-              </h4>
-              <span className="text-[10px] font-mono text-indigo-400">Tocca per centrare</span>
-            </div>
+          {/* Sidebar Luoghi Chiave (mostrata solo per OSM o Mappa Immagine Custom) */}
+          {selectedMapId !== 'districts' && (
+            <div className="w-full md:w-80 bg-slate-900/95 border-t md:border-t-0 md:border-l border-slate-800 p-4 flex flex-col shrink-0 overflow-y-auto z-20">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-slate-200 flex items-center space-x-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-red-500" />
+                  <span>Punti di Interesse ({markers.length})</span>
+                </h4>
+                <span className="text-[10px] font-mono text-indigo-400">Tocca per centrare</span>
+              </div>
 
-            {/* Lista Marker */}
-            <div className="flex-1 space-y-2 overflow-y-auto pr-1">
-              {markers.map((m) => (
-                <div
-                  key={m.id}
-                  onClick={() => centerOnMarker(m)}
-                  className="p-2.5 bg-slate-950/80 border border-slate-800/90 rounded-xl flex items-start justify-between group hover:border-indigo-600 transition-colors cursor-pointer"
-                >
-                  <div className="min-w-0 pr-2">
-                    <div className="flex items-center space-x-2">
-                      <span
-                        className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                          m.type === 'haven'
-                            ? 'bg-blue-500'
-                            : m.type === 'elysium'
-                            ? 'bg-purple-500'
-                            : m.type === 'crime'
-                            ? 'bg-red-500'
-                            : 'bg-amber-500'
-                        }`}
-                      />
-                      <span className="font-semibold text-xs text-slate-200 truncate">{m.name}</span>
-                    </div>
-                    {m.desc && <p className="text-[10px] text-slate-400 mt-0.5 truncate font-serif">{m.desc}</p>}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeMarker(m.id);
-                    }}
-                    className="text-slate-600 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
-                    title="Elimina punto"
+              {/* Lista Marker */}
+              <div className="flex-1 space-y-2 overflow-y-auto pr-1">
+                {markers.map((m) => (
+                  <div
+                    key={m.id}
+                    onClick={() => centerOnMarker(m)}
+                    className="p-2.5 bg-slate-950/80 border border-slate-800/90 rounded-xl flex items-start justify-between group hover:border-indigo-600 transition-colors cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <div className="min-w-0 pr-2">
+                      <div className="flex items-center space-x-2">
+                        <span
+                          className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                            m.type === 'haven'
+                              ? 'bg-blue-500'
+                              : m.type === 'elysium'
+                              ? 'bg-purple-500'
+                              : m.type === 'crime'
+                              ? 'bg-red-500'
+                              : 'bg-amber-500'
+                          }`}
+                        />
+                        <span className="font-semibold text-xs text-slate-200 truncate">{m.name}</span>
+                      </div>
+                      {m.desc && <p className="text-[10px] text-slate-400 mt-0.5 truncate font-serif">{m.desc}</p>}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeMarker(m.id);
+                      }}
+                      className="text-slate-600 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
+                      title="Elimina punto"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
 
             {/* Aggiungi nuovo punto con nome e tipo */}
             <div className="pt-3 border-t border-slate-800 space-y-2 mt-2">
@@ -737,8 +829,9 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
               )}
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
+  </div>
   );
 };

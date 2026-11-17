@@ -303,6 +303,30 @@ export interface CampaignMap {
   createdAt: number;
 }
 
+export type DistrictAlertLevel = 'safe' | 'patrolled' | 'lockdown';
+
+export interface DistrictLandmark {
+  id: string;
+  name: string;
+  desc: string;
+  type: 'haven' | 'elysium' | 'crime' | 'point';
+  danger?: string;
+}
+
+export interface CityDistrict {
+  id: string;
+  name: string;
+  subtitle: string;
+  description: string;
+  faction?: string;
+  factionColor?: string; // hex o colore tailwind
+  alertLevel: DistrictAlertLevel;
+  polyPoints: [number, number][]; // punti normalizzati [x, y] in percentuale 0-100 per SVG
+  centerPoint: [number, number]; // centroide [x, y] per badge e label
+  landmarks: DistrictLandmark[];
+  iconName?: string;
+}
+
 export interface CampaignConfig {
   id: string;
   title: string;
@@ -324,6 +348,8 @@ export interface CampaignConfig {
   rosterCharacters?: Character[];
   isQuickStart?: boolean;
   sessionMode?: 'solo' | 'tabletop';
+  activeDistrictId?: string; // ID del distretto in cui si trova attualmente il gruppo ("Voi Siete Qui")
+  cityDistricts?: CityDistrict[];
 }
 
 export interface RequiredRoll {

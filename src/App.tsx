@@ -535,16 +535,34 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
     },
     responseText?: string
   ) => {
-    // 1. Cambio Mappa Automatico Consigliato dal Narratore
-    if (response.suggestedMapName && campaign?.maps && campaign.maps.length > 0) {
+    // 1. Cambio Mappa Automatico Consigliato dal Narratore (Mappe Custom o Distretto Territoriale)
+    if (response.suggestedMapName && campaign) {
       const target = response.suggestedMapName.toLowerCase().trim();
-      const match = campaign.maps.find(
-        (m) => m.name.toLowerCase().includes(target) || target.includes(m.name.toLowerCase())
-      );
-      if (match && match.id !== campaign.activeMapId) {
-        const updated = { ...campaign, activeMapId: match.id };
-        setCampaign(updated);
-        safeLocalStorageSet('chronica_campaign', JSON.stringify(updated));
+
+      // Check se corrisponde a una Mappa Immagine caricata
+      if (campaign.maps && campaign.maps.length > 0) {
+        const matchMap = campaign.maps.find(
+          (m) => m.name.toLowerCase().includes(target) || target.includes(m.name.toLowerCase())
+        );
+        if (matchMap && matchMap.id !== campaign.activeMapId) {
+          const updated = { ...campaign, activeMapId: matchMap.id };
+          setCampaign(updated);
+          safeLocalStorageSet('chronica_campaign', JSON.stringify(updated));
+          multiplayer.updateCampaign(updated);
+        }
+      }
+
+      // Check se corrisponde a un Distretto Territoriale (Sposta automaticamente il segnalino del gruppo!)
+      if (campaign.cityDistricts && campaign.cityDistricts.length > 0) {
+        const matchDistrict = campaign.cityDistricts.find(
+          (d) => d.name.toLowerCase().includes(target) || target.includes(d.name.toLowerCase())
+        );
+        if (matchDistrict && matchDistrict.id !== campaign.activeDistrictId) {
+          const updated = { ...campaign, activeDistrictId: matchDistrict.id };
+          setCampaign(updated);
+          safeLocalStorageSet('chronica_campaign', JSON.stringify(updated));
+          multiplayer.updateCampaign(updated);
+        }
       }
     }
 
@@ -2158,6 +2176,20 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
             setCampaign(updatedCampaign);
             safeLocalStorageSet('chronica_campaign', JSON.stringify(updatedCampaign));
             multiplayer.updateCampaign(updatedCampaign);
+          }}
+          onUpdateDistricts={(districts, activeDistrictId) => {
+            const updatedCampaign: CampaignConfig = {
+              ...campaign,
+              cityDistricts: districts,
+              activeDistrictId: activeDistrictId ?? campaign.activeDistrictId,
+            };
+            setCampaign(updatedCampaign);
+            safeLocalStorageSet('chronica_campaign', JSON.stringify(updatedCampaign));
+            multiplayer.updateCampaign(updatedCampaign);
+          }}
+          onSendPlayerAction={(actionText) => {
+            setIsMapOpen(false);
+            handleSendAction(actionText);
           }}
         />
       )}

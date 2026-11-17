@@ -1404,9 +1404,9 @@ REGOLE ESSENZIALI DI GIOCO:
     - MERITI: Puoi valorizzare i Meriti reali registrati sulla scheda (es. "Estrazione Rapida" per estrarre e sparare all'istante; "Ambidestro" per colpire con due armi senza penalità).
     - DUE ARMI & AMBIDESTRO (DIVIETO DI SINGOLARE): Se il personaggio combatte con due spade o due katane, narra SEMPRE al plurale: "le sue due katane gemelle", "le due lame", descrivendo come le impugna entrambe (una per mano)!
     - INDIVIDUALITÀ DEL TURNO: Rivolgiti per nome al personaggio attualmente attivo ("${actingName}").
-12. MAPPE GEOGRAFICHE E CAMBIO AMBIENTAZIONE:
-    Quando la scena o il viaggio dei personaggi si sposta in una specifica città, fortezza, regione o luogo chiave presente nell'ambientazione della cronaca, o se il giocatore chiede dove si trova sulla mappa geografica, segnala il cambio ambientazione per aggiornare il pannello visivo inserendo a fine risposta:
-    [[MAPPA: "Nome del Luogo o della Mappa"]]
+12. MAPPE DEI DISTRETTI, SPOSTAMENTI E CAMBIO AMBIENTAZIONE:
+    Quando la scena o il viaggio dei personaggi si sposta in un quartiere/distretto cittadino (es. Porto, Quartiere Alto, Bastione, Distretto Industriale, ecc.), in una fortezza, regione o luogo chiave della cronaca, o se il giocatore si incammina verso una nuova zona, segnala lo spostamento per aggiornare automaticamente la mappa tematica e il marcatore della squadra ("Voi Siete Qui") inserendo a fine risposta:
+    [[MAPPA: "Nome del Distretto o Luogo"]]
 13. SCHIZZO TATTICO MINIMALE DELLA SCENA (BATTLEMAP BLUEPRINT):
     Quando scoppia un combattimento, un'imboscata o quando un giocatore chiede informazioni sulla posizione tattica (es. "dove siamo?", "cosa ho attorno?", "dov'è un riparo?", "dove sono i nemici?", "fammi uno schizzo della stanza/zona"), genera la mappa tattica minimale a griglia inserendo a fine risposta:
     [[BATTLEMAP: {"title": "Nome Scena", "locationName": "Luogo", "entities": [{"id": "p1", "name": "${actingName}", "type": "player", "x": 3, "y": 7}], "terrain": [{"type": "cover", "x": 4, "y": 6, "label": "Muretto / Tavolo / Riparo"}, {"type": "wall", "x": 0, "y": 0, "w": 10, "h": 1, "label": "Parete"}]}]]

@@ -251,6 +251,7 @@ REGOLE ESSENZIALI DI RITMO E GIOCO (PARITÀ ASSOLUTA E ALTO LIVELLO NARRATIVO):
 8. DIVIETO ASSOLUTO DI AUTORISOLUZIONE: Se il giocatore dichiara "gli sparo e lo ammazzo", ferma la scena ed emetti obbligatoriamente il tag [[TIRO:]]!
 9. OPZIONI CON TIRO DADI: Concludi SEMPRE con una frase completa e il blocco con 3 o 4 opzioni per la mossa successiva, specificando [Attributo + Abilità] per le azioni rischiose.
 [[OPZIONI: ["Azione con tiro [Attributo + Abilità]", "Altra azione tattica [Attributo + Abilità]", "Azione cauta narrativa"]]]
+10. MAPPA DEI DISTRETTI E SPOSTAMENTI: Quando i personaggi cambiano quartiere, distretto o si spostano in una nuova area della mappa (es. Porto, Quartiere Alto, Mercato, Bastione), segnala la posizione per aggiornare il marcatore del gruppo emettendo a fine risposta: [[MAPPA: "Nome Distretto o Luogo"]].
 `.trim();
 
     const prompt = `
