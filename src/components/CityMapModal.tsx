@@ -622,10 +622,11 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
                   mapMode === 'osm' ? 'bg-emerald-900 text-white font-bold' : 'text-slate-400 hover:text-white'
                 }`}
+                title="Visualizza la mappa geografica contemporanea (mondo reale odierno)"
               >
                 <Navigation className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Mappa Reale OSM</span>
-                <span className="sm:hidden">OSM</span>
+                <span className="hidden sm:inline">{era === 'modern' ? 'Mappa Reale OSM' : 'Satellite Oggi (Terra)'}</span>
+                <span className="sm:hidden">GPS</span>
               </button>
             </div>
 
@@ -709,9 +710,10 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
                   ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
               }`}
+              title="Visualizza la mappa satellitare o stradale della Terra odierna"
             >
               <Navigation className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Mappa Stradale / Satellite OSM</span>
+              <span>{era === 'modern' ? 'Mappa Stradale / Satellite OSM' : 'Satellite Oggi (Terra)'}</span>
             </button>
           </div>
 
