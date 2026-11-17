@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import type { CampaignConfig, HandoutSpec } from '../types';
+import type { CampaignConfig, HandoutSpec, Character } from '../types';
 import { TacticalSketchView } from './TacticalSketchView';
 import { generateThematicDistricts, isDistrictsMismatchingEra } from '../utils/districtGenerator';
 import {
   Map,
   Compass,
   FileText,
+  Scroll,
   ChevronRight,
   ChevronLeft,
   Maximize2,
@@ -17,6 +18,7 @@ import {
 
 interface TacticalSidePanelProps {
   campaign: CampaignConfig;
+  character?: Character | null;
   characterName?: string;
   party?: { id: string; name: string }[];
   activeEnemies?: any[];
@@ -29,6 +31,7 @@ interface TacticalSidePanelProps {
 
 export const TacticalSidePanel: React.FC<TacticalSidePanelProps> = ({
   campaign,
+  character,
   characterName = 'Kael',
   party = [],
   activeEnemies = [],
@@ -62,6 +65,23 @@ export const TacticalSidePanel: React.FC<TacticalSidePanelProps> = ({
   }, [campaign.cityDistricts, campaign.era, campaign.city]);
 
   const sidePartyDistrict = sideDistricts.find((d) => d.id === campaign.activeDistrictId) || sideDistricts[0];
+
+  // Estrazione Oggetti Missione & Trama dall'inventario della squadra
+  const missionGearItems = React.useMemo(() => {
+    if (!character) return [];
+    const items = character.structuredInventory && character.structuredInventory.length > 0
+      ? character.structuredInventory
+      : (character.inventory || []).map((it, idx) => ({ id: `it_${idx}`, name: String(it), category: 'gear' as const, quantity: 1 }));
+
+    return items.filter((i: any) => {
+      const n = (i.name || '').toLowerCase();
+      if (i.category === 'weapon' || i.category === 'ammo' || i.category === 'consumable') return false;
+      if (n.includes('giubbotto') || n.includes('cuoio rigido') || n.includes('armatura')) return false;
+      return true; // Oggetti narrativi, bottini, dispacci, monete, reliquie, manufatti
+    });
+  }, [character]);
+
+  const totalMissionCount = discoveredHandouts.length + missionGearItems.length;
 
   return (
     <div
@@ -110,10 +130,13 @@ export const TacticalSidePanel: React.FC<TacticalSidePanelProps> = ({
               setIsCollapsed(false);
               setActiveTab('handouts');
             }}
-            title="Reperti & Documenti"
-            className="p-2 rounded-xl hover:bg-slate-900 text-cyan-400 hover:text-cyan-300 cursor-pointer"
+            title="Oggetti Missione & Reperti"
+            className="p-2 rounded-xl hover:bg-slate-900 text-amber-400 hover:text-amber-300 cursor-pointer relative"
           >
-            <FileText className="w-5 h-5" />
+            <Scroll className="w-5 h-5" />
+            {totalMissionCount > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500" />
+            )}
           </button>
         </div>
       ) : (
@@ -153,15 +176,15 @@ export const TacticalSidePanel: React.FC<TacticalSidePanelProps> = ({
                 onClick={() => setActiveTab('handouts')}
                 className={`py-1.5 px-3 rounded-lg text-xs font-serif font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
                   activeTab === 'handouts'
-                    ? 'bg-cyan-900/80 text-white shadow-md border border-cyan-700/60'
+                    ? 'bg-amber-900/80 text-white shadow-md border border-amber-700/60'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Reperti</span>
-                {discoveredHandouts.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-cyan-500 text-black font-mono text-[9px] font-bold">
-                    {discoveredHandouts.length}
+                <Scroll className="w-3.5 h-3.5 text-amber-400" />
+                <span>Oggetti Missione</span>
+                {totalMissionCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-amber-500 text-black font-mono text-[9px] font-bold">
+                    {totalMissionCount}
                   </span>
                 )}
               </button>
@@ -336,63 +359,109 @@ export const TacticalSidePanel: React.FC<TacticalSidePanelProps> = ({
             )}
 
             {/* =================================================================== */}
-            {/* TAB 3: REPERTI & DOCUMENTI DI GIOCO (Handout Antichi)               */}
+            {/* TAB 3: OGGETTI MISSIONE & REPERTI (Manufatti & Documenti di Trama)  */}
             {/* =================================================================== */}
             {activeTab === 'handouts' && (
-              <div className="space-y-3">
-                <div className="p-3 bg-gradient-to-r from-cyan-950/40 to-slate-900 border border-cyan-800/40 rounded-2xl flex items-start space-x-2.5">
-                  <FileText className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+              <div className="space-y-4">
+                <div className="p-3 bg-gradient-to-r from-amber-950/40 via-cyan-950/30 to-slate-900 border border-amber-800/40 rounded-2xl flex items-start space-x-2.5">
+                  <Scroll className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-serif font-bold text-xs text-cyan-200">
-                      Reperti &amp; Documenti Scoperti
+                    <h4 className="font-serif font-bold text-xs text-amber-200">
+                      Oggetti Missione &amp; Reperti
                     </h4>
                     <p className="text-[11px] text-slate-400 font-serif leading-relaxed mt-0.5">
-                      Lettere sigillate, mandati reali, iscrizioni runiche e dispacci trovati durante la storia.
+                      Dispacci cifrati, reliquie, manufatti e documenti chiave trovati dalla squadra.
                     </p>
                   </div>
                 </div>
 
-                {discoveredHandouts.length === 0 ? (
-                  <div className="p-8 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 text-slate-500">
-                    <FileText className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-xs font-serif">Nessun documento o pergamena ancora scoperto.</p>
-                    <p className="text-[10px] font-mono text-slate-600 mt-1">
-                      Appena troverai contratti, lettere di Valerius o rune di Oakhaven, compariranno qui!
-                    </p>
-                  </div>
-                ) : (
+                {/* SEZIONE 1: DOCUMENTI & DISPACCI RIVELABILI */}
+                {discoveredHandouts.length > 0 && (
                   <div className="space-y-2">
-                    {discoveredHandouts.map((h) => (
-                      <div
-                        key={h.id}
-                        onClick={() => onOpenHandoutModal(h)}
-                        className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-cyan-700/80 transition-all cursor-pointer flex items-center justify-between group shadow-md"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-9 h-9 rounded-xl bg-cyan-950/70 border border-cyan-800/60 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
-                            {h.type === 'runic_stone' ? (
-                              <Sparkles className="w-4 h-4" />
-                            ) : (
-                              <FileText className="w-4 h-4" />
-                            )}
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold block px-1">
+                      📜 Documenti &amp; Dispacci Leggibili ({discoveredHandouts.length})
+                    </span>
+                    <div className="space-y-2">
+                      {discoveredHandouts.map((h) => (
+                        <div
+                          key={h.id}
+                          onClick={() => onOpenHandoutModal(h)}
+                          className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-cyan-600/80 transition-all cursor-pointer flex items-center justify-between group shadow-md"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-800/60 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
+                              {h.type === 'runic_stone' ? (
+                                <Sparkles className="w-4 h-4" />
+                              ) : (
+                                <FileText className="w-4 h-4" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-serif font-bold text-xs text-slate-100 group-hover:text-cyan-200 transition-colors">
+                                {h.title}
+                              </p>
+                              <p className="text-[10px] font-mono text-slate-400">
+                                {h.authorOrSeal || (h.type === 'military_dispatch' ? 'Dispaccio Tattico Cifrato' : 'Reperto d\'Epoca')}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-serif font-bold text-xs text-slate-100 group-hover:text-cyan-200 transition-colors">
-                              {h.title}
-                            </p>
-                            <p className="text-[10px] font-mono text-slate-400">
-                              {h.authorOrSeal || (h.type === 'runic_stone' ? 'Incisione Arcana' : 'Mandato Ufficiale')}
-                            </p>
-                          </div>
-                        </div>
 
-                        <span className="p-1.5 rounded-lg bg-slate-950 text-slate-400 group-hover:text-cyan-300">
-                          <Eye className="w-4 h-4" />
-                        </span>
-                      </div>
-                    ))}
+                          <span className="p-1.5 rounded-lg bg-slate-950 text-slate-400 group-hover:text-cyan-300">
+                            <Eye className="w-4 h-4" />
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
+
+                {/* SEZIONE 2: MANUFATTI & OGGETTI CHIAVE RACCOLTI DALLA SQUADRA */}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold block px-1">
+                    💎 Manufatti &amp; Oggetti di Trama ({missionGearItems.length})
+                  </span>
+
+                  {missionGearItems.length === 0 && discoveredHandouts.length === 0 ? (
+                    <div className="p-8 text-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/30 text-slate-500">
+                      <Scroll className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                      <p className="text-xs font-serif">Nessun oggetto missione ancora registrato.</p>
+                      <p className="text-[10px] font-mono text-slate-600 mt-1">
+                        Ogni manufatto, chiave, bottino narrativo o dispaccio recuperato comparirà automaticamente qui!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {missionGearItems.map((item: any, idx: number) => {
+                        const isDoc = /dispaccio|lettera|documento|pergamena|cifrat/i.test(item.name);
+                        return (
+                          <div
+                            key={item.id || `m_item_${idx}`}
+                            className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800/90 shadow-sm flex items-start justify-between space-x-3"
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="w-9 h-9 rounded-xl bg-amber-950/60 border border-amber-800/50 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
+                                {isDoc ? <FileText className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                              </div>
+                              <div>
+                                <p className="font-serif font-bold text-xs text-amber-100">
+                                  {item.name}
+                                </p>
+                                {item.description && (
+                                  <p className="text-[11px] text-slate-400 font-serif leading-relaxed mt-0.5">
+                                    {item.description}
+                                  </p>
+                                )}
+                                <span className="inline-block mt-1 text-[9px] font-mono text-amber-500/90 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800/40">
+                                  In possesso del gruppo • Visibile in Inventario
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

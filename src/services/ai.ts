@@ -261,7 +261,7 @@ REGOLE ESSENZIALI DI RITMO E GIOCO (PARITÀ ASSOLUTA E ALTO LIVELLO NARRATIVO):
      • RIPARTIZIONE DELLE MINACCE: Quando affrontano più nemici, gli avversari si dividono tra i vari membri della squadra (evitando di concentrare tutti gli attacchi solo sul giocatore umano).
      • CONDIVISIONE RISCHI: Anche i compagni incassano, parano e subiscono colpi nemici.
      • MULTIPLAYER: Distribuisci sempre le minacce tra i giocatori al tavolo; usa [[DANNO_GIOCATORE: {"target": "Nome", "points": N, "type": "lethal"}]] se un giocatore specifico viene colpito.
-6. BOTTINO NARRATIVO: Assegna oggetti trovati solo con [[OGGETTO: "Nome Oggetto" | "Provenienza"]].
+6. BOTTINO & OGGETTI MISSIONE: Assegna oggetti trovati solo con [[OGGETTO: "Nome Oggetto" | "Provenienza"]]. DIVIETO ASSOLUTO di riproporre oggetti già trovati (zero duplicati)! Se l'oggetto è un dispaccio/lettera, genera anche [[REPERTO:]] per renderlo leggibile a schermo intero.
 7. CONTROLLO INVENTARIO & MUNIZIONI: Vietato sparare se munizioni = 0 ('click' a vuoto); vietato curarsi se non si possiedono bende o kit medici reali!
 8. DIVIETO ASSOLUTO DI AUTORISOLUZIONE: Se il giocatore dichiara "gli sparo e lo ammazzo", ferma la scena ed emetti obbligatoriamente il tag [[TIRO:]]!
 9. OPZIONI CON TIRO DADI: Concludi SEMPRE con una frase completa e il blocco con 3 o 4 opzioni per la mossa successiva, specificando [Attributo + Abilità] per le azioni rischiose.

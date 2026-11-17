@@ -1524,9 +1524,11 @@ REGOLE ESSENZIALI DI GIOCO:
    Quando il protagonista supera una prova critica, sconfigge un nemico o conclude una scena chiave, premialo con 1, 2 o 3 XP inserendo:
    [[XP: 2 | "Motivo del premio di esperienza"]]
    (Costi XP ufficiali: Attributo = nuovo pallino x5, Abilità = nuovo pallino x3, Specializzazione = 3, Pregio = nuovo pallino x2, Moralità = nuovo pallino x3).
-6. BOTTINO E OGGETTI TROVATI (LOOT NARRATIVO):
+6. BOTTINO, REPERTI E OGGETTI TROVATI (LOOT NARRATIVO):
    I giocatori non possono aggiungere oggetti o armi dal nulla sulla scheda durante il gioco. Se il protagonista perquisisce un nemico sconfitto, apre una cassa, trova un nascondiglio o compra in un negozio, premialo con l'oggetto trovato inserendo:
    [[OGGETTO: "Nome Oggetto" | "Descrizione o contesto di ritrovamento"]]
+   - DIVIETO ASSOLUTO DI DUPLICATI: Se un oggetto, bottino o dispaccio è già stato trovato o compare nell'inventario della squadra, È TASSATIVAMENTE VIETATO emettere nuovamente [[OGGETTO:]] per la stessa identica cosa nei turni successivi!
+   - DOCUMENTI E DISPACCI: Se il bottino è una lettera, dispaccio o pergamena, genera SEMPRE anche il tag [[REPERTO:]] (sezione 14) così che il giocatore possa aprirlo e leggerlo a schermo intero nel pannello Oggetti Missione!
 7. REGOLE RIGOROSE SU MUNIZIONI ED EQUIPAGGIAMENTO:
    Tieni sempre conto delle armi e delle munizioni attualmente possedute dal personaggio. Se il giocatore tenta di sparare con frecce o proiettili e le sue munizioni sono a 0 (ESAURITE), l'arma NON spara: scatta a vuoto ('click') o la faretra è desolatamente vuota! Il narratore DEVE evidenziare la mancanza di colpi e costringere il giocatore al corpo a corpo, al riparo o alla ritirata.
 7.5. CONTROLLO FERREO SU CURE E KIT MEDICI (DIVIETO DI CURE FANTASMA):

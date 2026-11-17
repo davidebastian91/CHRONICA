@@ -392,20 +392,47 @@ export function addLootToInventory(char: Character, rawName: string, description
   const parsed = parseRawItem(rawName, items.length);
   if (description) parsed.description = description;
 
-  // Se è una munizione e ne abbiamo già dello stesso tipo, incrementa la quantità
-  const existingIndex = items.findIndex(
-    (i) => i.category === parsed.category && i.name.toLowerCase() === parsed.name.toLowerCase()
+  // 1. Se è una munizione e ne abbiamo già dello stesso tipo, incrementa la quantità
+  const existingAmmoIndex = items.findIndex(
+    (i) => i.category === 'ammo' && i.name.toLowerCase() === parsed.name.toLowerCase()
   );
-
-  if (existingIndex !== -1) {
-    items[existingIndex] = {
-      ...items[existingIndex],
-      quantity: items[existingIndex].quantity + parsed.quantity,
+  if (existingAmmoIndex !== -1) {
+    items[existingAmmoIndex] = {
+      ...items[existingAmmoIndex],
+      quantity: items[existingAmmoIndex].quantity + parsed.quantity,
     };
-  } else {
-    items.push(parsed);
+    return updateCharacterInventory(char, items);
   }
 
+  // 2. Controllo duplicati intelligenti per oggetti di missione, dispacci e bottini narrativi
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+  const newNorm = normalize(parsed.name);
+
+  const existingGearIndex = items.findIndex((i) => {
+    const oldNorm = normalize(i.name);
+    if (oldNorm === newNorm) return true;
+    // Se entrambi contengono "dispaccio cifrato" o "cuore di scorie", è lo stesso identico oggetto di trama
+    if (oldNorm.includes('dispaccio') && newNorm.includes('dispaccio') && (oldNorm.includes('cifrat') || newNorm.includes('cifrat'))) {
+      return true;
+    }
+    if (oldNorm.includes('cuore di scorie') && newNorm.includes('cuore di scorie')) {
+      return true;
+    }
+    return false;
+  });
+
+  if (existingGearIndex !== -1) {
+    // Non duplicare: aggiorna la descrizione se più dettagliata
+    if (description && (!items[existingGearIndex].description || description.length > items[existingGearIndex].description!.length)) {
+      items[existingGearIndex] = {
+        ...items[existingGearIndex],
+        description,
+      };
+    }
+    return updateCharacterInventory(char, items);
+  }
+
+  items.push(parsed);
   return updateCharacterInventory(char, items);
 }
 

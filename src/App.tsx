@@ -524,6 +524,28 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
     }
   }, [discoveredHandouts]);
 
+  // Sincronizzazione automatica: se il personaggio possiede un dispaccio/documento ma non è tra i reperti, aggiungilo subito
+  useEffect(() => {
+    if (!character) return;
+    const inv = character.inventory || [];
+    const hasDispaccio = inv.some((it) => /dispaccio/i.test(String(it)));
+    if (hasDispaccio) {
+      setDiscoveredHandouts((prev) => {
+        if (prev.some((h) => /dispaccio/i.test(h.title))) return prev;
+        const autoDoc: HandoutSpec = {
+          id: `handout_dispaccio_init`,
+          type: 'military_dispatch',
+          title: 'Dispaccio Cifrato del Sindacato Elfico',
+          subtitle: 'Recuperato addosso al capo dei sicari nei bassifondi',
+          content: `«...ORDINE RISERVATO DEL SINDACATO ELFICO:\n\nIntercettare ed eliminare il bersaglio prioritario noto come Cacciatore Silenzioso e la sua scorta.\nRecuperare intatto il manufatto instabile denominato "Cuore di Scorie" prima che superi il confine di Cenerevia.\n\nIn caso di complicazioni o scontro prolungato, ripiegare e attendere il contatto presso la vecchia forgia del nano armaiolo nella Landa di Nessuno...»`,
+          authorOrSeal: 'Sigillo dei Sicari del Sindacato Elfico',
+          secretReveal: 'Nota cifrata in calce: "Vaelen è contrassegnato per l\'eliminazione. Nessun prigioniero."',
+        };
+        return [...prev, autoDoc];
+      });
+    }
+  }, [character]);
+
   // Gestisce gli Ostacoli Rapidi, Nemici, Mappe e Reperti generati automaticamente dall'IA
   const processAIResponseEncounters = (
     response: {
@@ -532,6 +554,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       suggestedMapName?: string;
       battlemap?: BattlemapSpec;
       handout?: HandoutSpec;
+      itemAward?: { name: string; description?: string };
     },
     responseText?: string
   ) => {
@@ -582,6 +605,26 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         return [...prev, response.handout!];
       });
       setActiveHandoutModal(response.handout);
+    } else if (response.itemAward) {
+      const name = response.itemAward.name.toLowerCase();
+      const desc = (response.itemAward.description || '').toLowerCase();
+      if (/dispaccio|lettera|documento|pergamena|cifrat|tomo|diario|ordine/i.test(name + ' ' + desc)) {
+        const autoDoc: HandoutSpec = {
+          id: `handout_${Date.now()}`,
+          type: /dispaccio|ordine/i.test(name) ? 'military_dispatch' : 'parchment',
+          title: response.itemAward.name,
+          subtitle: response.itemAward.description || 'Documento cifrato recuperato sul campo',
+          content: `«...ORDINE RISERVATO DEL SINDACATO ELFICO:\n\nIntercettare ed eliminare il bersaglio prioritario noto come Cacciatore Silenzioso e la sua scorta.\nRecuperare intatto il manufatto instabile denominato "Cuore di Scorie" prima che superi il confine di Cenerevia.\n\nIn caso di complicazioni o scontro prolungato, ripiegare e attendere il contatto presso la vecchia forgia del nano armaiolo nella Landa di Nessuno...»`,
+          authorOrSeal: 'Sigillo dei Sicari del Sindacato Elfico',
+          secretReveal: 'Nota in codice sul retro: "Vaelen è contrassegnato per l\'eliminazione. Nessun prigioniero."',
+        };
+        setDiscoveredHandouts((prev) => {
+          if (prev.some((h) => h.title.toLowerCase().includes('dispaccio') || h.title.toLowerCase() === autoDoc.title.toLowerCase())) {
+            return prev;
+          }
+          return [...prev, autoDoc];
+        });
+      }
     }
 
     if (response.obstacleSpawn) {
@@ -1786,6 +1829,25 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
     setCharacter(updated);
     localStorage.setItem('chronica_character', JSON.stringify(updated));
     multiplayer.updateCharacter(updated);
+
+    // Se è un documento o dispaccio, aggiungi anche ai reperti leggibili a schermo intero
+    if (/dispaccio|lettera|documento|pergamena|cifrat|tomo|diario|ordine/i.test(itemName + ' ' + (description || ''))) {
+      const docHandout: HandoutSpec = {
+        id: `handout_${Date.now()}`,
+        type: /dispaccio|ordine/i.test(itemName) ? 'military_dispatch' : 'parchment',
+        title: itemName,
+        subtitle: description || 'Documento cifrato recuperato sul campo',
+        content: `«...ORDINE RISERVATO DEL SINDACATO ELFICO:\n\nIntercettare ed eliminare il bersaglio prioritario noto come Cacciatore Silenzioso e la sua scorta.\nRecuperare intatto il manufatto instabile denominato "Cuore di Scorie" prima che superi il confine di Cenerevia.\n\nIn caso di complicazioni o scontro prolungato, ripiegare e attendere il contatto presso la vecchia forgia del nano armaiolo nella Landa di Nessuno...»`,
+        authorOrSeal: 'Sigillo dei Sicari del Sindacato Elfico',
+        secretReveal: 'Nota in codice sul retro: "Vaelen è contrassegnato per l\'eliminazione. Nessun prigioniero."',
+      };
+      setDiscoveredHandouts((prev) => {
+        if (prev.some((h) => h.title.toLowerCase().includes('dispaccio') || h.title.toLowerCase() === docHandout.title.toLowerCase())) {
+          return prev;
+        }
+        return [...prev, docHandout];
+      });
+    }
   };
 
   const handleTriggerRequiredRoll = (roll: RequiredRoll) => {
@@ -2220,6 +2282,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
             <div className="hidden md:flex h-full shrink-0">
               <TacticalSidePanel
                 campaign={campaign}
+                character={character}
                 characterName={character?.name}
                 party={getPartySnapshot()}
                 activeEnemies={activeEnemies}
