@@ -955,18 +955,35 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
           };
 
           // Aggiornamento automatico della Salute del giocatore su Danni inflitti dal Narratore
-          if (response.playerDamage && activeChar) {
-            const dmgRes = applyDamageToHealth(activeChar.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
-            const damagedChar = { ...activeChar, health: dmgRes.updatedHealth };
-            activeChar = damagedChar;
-            if (actingPlayer) {
-              actingPlayer.character = damagedChar;
-              setConnectedPlayers([...connectedPlayers]);
-            } else if (character) {
-              setCharacter(damagedChar);
-              localStorage.setItem('chronica_character', JSON.stringify(damagedChar));
+          if (response.playerDamage) {
+            let targetChar = activeChar;
+            let targetPlayer = actingPlayer;
+
+            if (response.playerDamage.target && connectedPlayers.length > 0) {
+              const tgt = response.playerDamage.target.toLowerCase();
+              const matched = connectedPlayers.find(
+                (p) =>
+                  p.name?.toLowerCase().includes(tgt) ||
+                  p.character?.name?.toLowerCase().includes(tgt)
+              );
+              if (matched?.character) {
+                targetPlayer = matched;
+                targetChar = matched.character;
+              }
             }
-            multiplayer.updateCharacter(damagedChar);
+
+            if (targetChar) {
+              const dmgRes = applyDamageToHealth(targetChar.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
+              const damagedChar = { ...targetChar, health: dmgRes.updatedHealth };
+              if (targetPlayer) {
+                targetPlayer.character = damagedChar;
+                setConnectedPlayers([...connectedPlayers]);
+              } else if (character) {
+                setCharacter(damagedChar);
+                localStorage.setItem('chronica_character', JSON.stringify(damagedChar));
+              }
+              multiplayer.updateCharacter(damagedChar);
+            }
           }
 
           // Aggiornamento automatico della Salute del giocatore su Cure ricevute dal Narratore
@@ -1217,12 +1234,32 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       };
 
       // Aggiornamento automatico della Salute del protagonista su Danni inflitti dal Narratore
-      if (response.playerDamage && character) {
-        const dmgRes = applyDamageToHealth(character.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
-        const damagedChar = { ...character, health: dmgRes.updatedHealth };
-        setCharacter(damagedChar);
-        localStorage.setItem('chronica_character', JSON.stringify(damagedChar));
-        multiplayer.updateCharacter(damagedChar);
+      if (response.playerDamage) {
+        let targetChar = character;
+        if (response.playerDamage.target && connectedPlayers.length > 0) {
+          const tgt = response.playerDamage.target.toLowerCase();
+          const matched = connectedPlayers.find(
+            (p) =>
+              p.name?.toLowerCase().includes(tgt) ||
+              p.character?.name?.toLowerCase().includes(tgt)
+          );
+          if (matched?.character) {
+            targetChar = matched.character;
+            const dmgRes = applyDamageToHealth(targetChar.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
+            const damagedChar = { ...targetChar, health: dmgRes.updatedHealth };
+            setConnectedPlayers((prev) =>
+              prev.map((p) => (p.id === matched.id ? { ...p, character: damagedChar } : p))
+            );
+            targetChar = null; // already handled
+          }
+        }
+        if (targetChar) {
+          const dmgRes = applyDamageToHealth(targetChar.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
+          const damagedChar = { ...targetChar, health: dmgRes.updatedHealth };
+          setCharacter(damagedChar);
+          localStorage.setItem('chronica_character', JSON.stringify(damagedChar));
+          multiplayer.updateCharacter(damagedChar);
+        }
       }
 
       // Aggiornamento automatico della Salute del protagonista su Cure ricevute dal Narratore
@@ -1348,18 +1385,34 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       };
 
       // Aggiornamento automatico della Salute del giocatore su Danni narrativi
-      if (response.playerDamage && targetChar) {
-        const dmgRes = applyDamageToHealth(targetChar.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
-        const damagedChar = { ...targetChar, health: dmgRes.updatedHealth };
-        if (isMobileTarget && targetPlayerId) {
-          setConnectedPlayers((prev) =>
-            prev.map((p) => (p.id === targetPlayerId ? { ...p, character: damagedChar } : p))
+      if (response.playerDamage) {
+        let finalChar = targetChar;
+        let finalPlayerId = isMobileTarget ? targetPlayerId : undefined;
+        if (response.playerDamage.target && connectedPlayers.length > 0) {
+          const tgt = response.playerDamage.target.toLowerCase();
+          const matched = connectedPlayers.find(
+            (p) =>
+              p.name?.toLowerCase().includes(tgt) ||
+              p.character?.name?.toLowerCase().includes(tgt)
           );
-        } else if (character) {
-          setCharacter(damagedChar);
-          localStorage.setItem('chronica_character', JSON.stringify(damagedChar));
+          if (matched?.character) {
+            finalChar = matched.character;
+            finalPlayerId = matched.id;
+          }
         }
-        multiplayer.updateCharacter(damagedChar);
+        if (finalChar) {
+          const dmgRes = applyDamageToHealth(finalChar.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
+          const damagedChar = { ...finalChar, health: dmgRes.updatedHealth };
+          if (finalPlayerId) {
+            setConnectedPlayers((prev) =>
+              prev.map((p) => (p.id === finalPlayerId ? { ...p, character: damagedChar } : p))
+            );
+          } else if (character) {
+            setCharacter(damagedChar);
+            localStorage.setItem('chronica_character', JSON.stringify(damagedChar));
+          }
+          multiplayer.updateCharacter(damagedChar);
+        }
       }
 
       // Aggiornamento automatico della Salute del giocatore su Cure narrative
@@ -1587,18 +1640,34 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       };
 
       // Aggiornamento automatico della Salute del giocatore su Danni narrativi
-      if (response.playerDamage && activeChar) {
-        const dmgRes = applyDamageToHealth(activeChar.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
-        const damagedChar = { ...activeChar, health: dmgRes.updatedHealth };
-        if (isMobileSource && sourcePlayerId) {
-          setConnectedPlayers((prev) =>
-            prev.map((p) => (p.id === sourcePlayerId ? { ...p, character: damagedChar } : p))
+      if (response.playerDamage) {
+        let finalChar = activeChar;
+        let finalSourceId = isMobileSource ? sourcePlayerId : undefined;
+        if (response.playerDamage.target && connectedPlayers.length > 0) {
+          const tgt = response.playerDamage.target.toLowerCase();
+          const matched = connectedPlayers.find(
+            (p) =>
+              p.name?.toLowerCase().includes(tgt) ||
+              p.character?.name?.toLowerCase().includes(tgt)
           );
-        } else if (character) {
-          setCharacter(damagedChar);
-          localStorage.setItem('chronica_character', JSON.stringify(damagedChar));
+          if (matched?.character) {
+            finalChar = matched.character;
+            finalSourceId = matched.id;
+          }
         }
-        multiplayer.updateCharacter(damagedChar);
+        if (finalChar) {
+          const dmgRes = applyDamageToHealth(finalChar.health, response.playerDamage.points, response.playerDamage.type || 'lethal');
+          const damagedChar = { ...finalChar, health: dmgRes.updatedHealth };
+          if (finalSourceId) {
+            setConnectedPlayers((prev) =>
+              prev.map((p) => (p.id === finalSourceId ? { ...p, character: damagedChar } : p))
+            );
+          } else if (character) {
+            setCharacter(damagedChar);
+            localStorage.setItem('chronica_character', JSON.stringify(damagedChar));
+          }
+          multiplayer.updateCharacter(damagedChar);
+        }
       }
 
       // Aggiornamento automatico della Salute del giocatore su Cure narrative

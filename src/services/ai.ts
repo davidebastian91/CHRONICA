@@ -175,7 +175,7 @@ export async function generateNarratorResponse(
   itemAward?: { name: string; description: string };
   obstacleSpawn?: Omit<DynamicObstacle, 'id' | 'currentSuccesses'>;
   enemySpawns?: EnemySpawnSpec[];
-  playerDamage?: { points: number; type: DamageType; reason?: string };
+  playerDamage?: { target?: string; points: number; type: DamageType; reason?: string };
   enemyAttackRoll?: EnemyAttackRollSpec;
   playerHeal?: { points: number; type?: DamageType; reason?: string };
   suggestedMapName?: string;
@@ -256,7 +256,11 @@ REGOLE ESSENZIALI DI RITMO E GIOCO (PARITÀ ASSOLUTA E ALTO LIVELLO NARRATIVO):
 5. BOSS D'ÉLITE E VARIETÀ TATTICA:
    - Boss e Comandanti: MAI armati di semplici pugnaletti anonimi! Hanno armi iconiche/storiche superiori e 1-2 abilità speciali uniche riportate in "notes" di [[NEMICO:]] che costringono i giocatori a collaborare e pensare a una tattica per batterli. Finché la loro salute è > 0, vietato farli morire!
    - Sbarramenti e Guardie: credibili e proporzionati alla fazione (nella roccaforte del tiranno sono soldati scelti corazzati con scudi e alabarde). Varietà assoluta: mai tutti con la stessa identica arma, mescola tiratori, fanti da mischia e assalitori rapidi.
-   - Alleati del Cast: trattati con la stessa dignità, armi personali e supporto attivo senza rubare la scena.
+   - AGENCY E COMBATTIMENTO DEI COMPAGNI (PNG & MULTIPLAYER):
+     • DIVIETO DI COMPAGNI PASSIVI: Gli alleati al fianco del protagonista (PNG o altri giocatori) combattono attivamente, ingaggiano i nemici e abbattono avversari in parallelo senza bisogno di comandi vocali continui.
+     • RIPARTIZIONE DELLE MINACCE: Quando affrontano più nemici, gli avversari si dividono tra i vari membri della squadra (evitando di concentrare tutti gli attacchi solo sul giocatore umano).
+     • CONDIVISIONE RISCHI: Anche i compagni incassano, parano e subiscono colpi nemici.
+     • MULTIPLAYER: Distribuisci sempre le minacce tra i giocatori al tavolo; usa [[DANNO_GIOCATORE: {"target": "Nome", "points": N, "type": "lethal"}]] se un giocatore specifico viene colpito.
 6. BOTTINO NARRATIVO: Assegna oggetti trovati solo con [[OGGETTO: "Nome Oggetto" | "Provenienza"]].
 7. CONTROLLO INVENTARIO & MUNIZIONI: Vietato sparare se munizioni = 0 ('click' a vuoto); vietato curarsi se non si possiedono bende o kit medici reali!
 8. DIVIETO ASSOLUTO DI AUTORISOLUZIONE: Se il giocatore dichiara "gli sparo e lo ammazzo", ferma la scena ed emetti obbligatoriamente il tag [[TIRO:]]!
@@ -375,7 +379,7 @@ function parseAIResponse(
   itemAward?: { name: string; description: string };
   obstacleSpawn?: Omit<DynamicObstacle, 'id' | 'currentSuccesses'>;
   enemySpawns?: EnemySpawnSpec[];
-  playerDamage?: { points: number; type: DamageType; reason?: string };
+  playerDamage?: { target?: string; points: number; type: DamageType; reason?: string };
   enemyAttackRoll?: EnemyAttackRollSpec;
   playerHeal?: { points: number; type?: DamageType; reason?: string };
   suggestedMapName?: string;
@@ -388,7 +392,7 @@ function parseAIResponse(
   let xpAward: { amount: number; reason: string } | undefined = undefined;
   let itemAward: { name: string; description: string } | undefined = undefined;
   let obstacleSpawn: Omit<DynamicObstacle, 'id' | 'currentSuccesses'> | undefined = undefined;
-  let playerDamage: { points: number; type: DamageType; reason?: string } | undefined = undefined;
+  let playerDamage: { target?: string; points: number; type: DamageType; reason?: string } | undefined = undefined;
   let enemyAttackRoll: EnemyAttackRollSpec | undefined = undefined;
   let playerHeal: { points: number; type?: DamageType; reason?: string } | undefined = undefined;
   const enemySpawns: EnemySpawnSpec[] = [];
@@ -491,6 +495,7 @@ function parseAIResponse(
       const rawType = String(parsed.type || '').toLowerCase();
       const type: DamageType = rawType === 'aggravated' || rawType === 'bashing' ? rawType : 'lethal';
       playerDamage = {
+        target: parsed.target ? String(parsed.target).trim() : undefined,
         points,
         type,
         reason: parsed.reason || 'Danno subito',

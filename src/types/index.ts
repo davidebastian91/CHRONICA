@@ -434,6 +434,7 @@ export interface StoryMessage {
     description: string;
   };
   playerDamageAward?: {
+    target?: string;
     points: number;
     type: DamageType;
     reason?: string;

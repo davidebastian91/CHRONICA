@@ -413,6 +413,7 @@ function parseAIResponse(rawText, defaultSuggestions) {
       const rawType = String(parsed.type || '').toLowerCase();
       const type = rawType === 'aggravated' || rawType === 'bashing' ? rawType : 'lethal';
       playerDamage = {
+        target: parsed.target ? String(parsed.target).trim() : undefined,
         points,
         type,
         reason: parsed.reason || 'Danno subito',
@@ -1577,8 +1578,13 @@ REGOLE ESSENZIALI DI GIOCO:
    - VARIETÀ TATTICA NEI NEMICI ORDINARI E SCONTRI MULTIPLI:
      • MAI nemici fotocopia tutti armati allo stesso modo (vietato fare 4 guardie tutte con la sola spada o la sola pistola).
      • Mescola sempre ruoli tattici: fanti da mischia con scudo e corazza in prima linea, tiratori/balestrieri con coperture da distanza, assalitori veloci sui fianchi con armi da getto o granate/molotov.
-   - CURA ED ECCELLENZA PER GLI ALLEATI E COMPRIMARI:
-     • Gli alleati al fianco del gruppo (PNG del cast o personaggi secondari) non sono comparse inerti: hanno le loro armi personali, stile di combattimento, virtù e difetti, e supportano la squadra con coerenza senza rubare la scena agli eroi.
+   - AGENCY, INIZIATIVA E COMBATTIMENTO DEI COMPAGNI DI SQUADRA (PNG ALLEATI & TAVOLO MULTIPLAYER):
+     • DIVIETO DI COMPAGNI PASSIVI O "SPETTATORI CARTONATI": Gli alleati al fianco del protagonista (comprimari PNG del cast, mercenari o compagni di squadra) NON sono comparse inerti che tirano pietre o stanno fermi a guardare. Sono combattenti addestrati e letali.
+     • RIPARTIZIONE DELLE MINACCE (COMBATTIMENTO PARALLELO): Quando arrivano più nemici (es. 2 o più avversari, una pattuglia o un branco):
+       - I nemici si dividono i bersagli tra tutti i combattenti della squadra (giocatori umani e compagni PNG). DIVIETO di far convergere tutti i colpi o l'attenzione nemica esclusivamente sul giocatore attivo!
+       - I compagni di squadra combattono attivamente e parallelamente senza bisogno che il giocatore debba comandarli a microfono ad ogni singolo fendente: ad ogni turno descrivi chiaramente come il compagno (es. il guerriero possente in mischia, il tiratore da distanza o l'incantatore con la sua magia) ingaggia, danneggia, atterra o abbatte un nemico con le proprie armi caratteristiche.
+     • CONDIVISIONE DEI RISCHI E CONTRATTACCHI NEMICI: I nemici contrattaccano anche i compagni PNG (che parano con lo scudo, incassano colpi superficiali o respingono gli assalti), togliendo la sensazione che il mondo ce l'abbia solo con il giocatore umano e rendendo il combattimento una vera sfida di squadra.
+     • TAVOLO CON PIÙ GIOCATORI UMANI: Distribuisci sempre le minacce e i bersagli tra i vari giocatori presenti al tavolo in modo equo e dinamico. Se un nemico attacca o ferisce un giocatore specifico, segnalalo sia nella narrazione sia nel tag: [[DANNO_GIOCATORE: {"target": "Nome Personaggio", "points": 1, "type": "lethal", "reason": "Fendente subito"}]].
 9. CHIUSURA COMPLETA DELLA FRASE:
    Termina SEMPRE l'ultimo paragrafo con una frase compiuta e un punto fermo prima dei tag speciali.
 10. Includi SEMPRE alla fine il blocco con 3 o 4 opzioni contestuali per la prossima mossa:
