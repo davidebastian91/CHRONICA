@@ -10,6 +10,7 @@ import type {
   DamageType,
   BattlemapSpec,
   HandoutSpec,
+  EnemyAttackRollSpec,
 } from '../types';
 import { createDefaultCharacter } from '../utils/characterTemplates';
 
@@ -175,6 +176,7 @@ export async function generateNarratorResponse(
   obstacleSpawn?: Omit<DynamicObstacle, 'id' | 'currentSuccesses'>;
   enemySpawns?: EnemySpawnSpec[];
   playerDamage?: { points: number; type: DamageType; reason?: string };
+  enemyAttackRoll?: EnemyAttackRollSpec;
   playerHeal?: { points: number; type?: DamageType; reason?: string };
   suggestedMapName?: string;
   battlemap?: BattlemapSpec;
@@ -234,11 +236,20 @@ ${localStoryOutlineBlock}
 REGOLE ESSENZIALI DI RITMO E GIOCO (PARITÀ ASSOLUTA E ALTO LIVELLO NARRATIVO):
 1. RITMO SERRATO E DIRETTO: Nei momenti di azione, sparatorie, combattimenti o pericolo immediato, sii BREVE e INCISIVO (massimo 2 brevi paragrafi d'impatto visivo, circa 80-120 parole). Niente descrizioni barocche verbose mentre si spara o si lotta: ritmo cinematografico rapido e passa la mano al giocatore.
 2. COMBINAZIONI ATTRIBUTO + ABILITÀ & MODIFICATORI: Quando richiedi un tiro con [[TIRO:]], usa combinazioni coerenti (es. Destrezza + Armi da Fuoco, Forza + Armi da Mischia, Forza + Lotta, ecc.). Se applichi modificatori situazionali o per bersaglio specifico, inserisci "modifier": -5 (o +2) nel JSON: [[TIRO: {"attribute": "Destrezza", "ability": "Armi da Fuoco", "difficulty": 8, "modifier": -5, "reason": "Colpire il punto debole"}]]
-3. PARITÀ ASSOLUTA, COMBATTIMENTO E CONTRATTACCO NEMICO (NO PLOT ARMOR):
-   - I giocatori NON sono intoccabili: sanguinano e rischiano la vita.
-   - Se il giocatore fallisce un tiro in combattimento (0 successi) o si espone incautamente, non subisce danni punitivi dal nulla, ma il colpo va a vuoto o si sbilancia.
-   - Il nemico attivo sfrutta IMMEDIATAMENTE l'apertura e contrattacca calcolando i propri dadi (attackPool contro Difesa/Armatura del bersaglio): se ottiene successi, infligge ferite reali inserendo [[DANNO_GIOCATORE: {"points": X, "type": "lethal", "reason": "Contrattacco nemico"}]]. Se fa 0 successi, il giocatore schiva o para all'ultimo secondo.
-   - VIETATO far esitare i nemici o farli parlare a vuoto quando sono a distanza utile!
+3. GESTIONE DEI CONFLITTI E COMBATTIMENTO (SISTEMA A 3 LIVELLI CHRONICA - UNIVERSALE PER OGNI AMBIENTAZIONE/EPOCA):
+   Il giocatore lancia SEMPRE i suoi dadi per qualsiasi sua azione (attacco, manovra, salto, fuga). La reazione del mondo segue 3 livelli:
+   • LIVELLO 1: SCONTRI TATTICI SERI, BOSS, MOSTRI & AVVERSARI LETALI
+     - Quando un nemico primario o mostro contrattacca o colpisce, il Narratore DEVE mostrare il tiro palese dei dadi D10 del nemico contro la Difesa del giocatore:
+       [[TIRO_NEMICO: {"attacker": "Nome Nemico", "pool": 6, "dice": [9, 8, 4, 3, 2, 1], "successes": 2, "defenseSubtracted": 1, "netSuccesses": 1, "damageType": "lethal", "action": "Fendente o colpo mirato"}]]
+       - Se netSuccesses > 0: Il colpo va a segno e infligge N ferite reali: inserisci anche [[DANNO_GIOCATORE: {"points": N, "type": "lethal", "reason": "Contrattacco nemico"}]]
+       - Se netSuccesses == 0: L'attacco nemico fa 0 successi netti, viene parato o schivato dal giocatore! Nessun danno subito.
+   • LIVELLO 2: SCARAMUCCE VELOCI, RISSE DA TAVERNA, BARUFFE & GUARDIE GENERICHE
+     - Il Giocatore lancia SEMPRE i suoi dadi (es. Forza + Lotta, o Destrezza + Mischia). Il tiro del giocatore è sacro!
+     - Per mantenere il ritmo cinematografico e rapido, NON si genera il tiro del singolo nemico generico.
+     - L'esito si risolve direttamente dal tiro del giocatore (successo = atterra il nemico; 0 o 1 successo = contraccolpo con [[DANNO_GIOCATORE: {"points": 1, "type": "bashing", "reason": "Colpo di striscio nella mischia"}]]).
+   • LIVELLO 3: INSEGUIMENTI, POSTI DI BLOCCO, FUGHE & OSTACOLI AMBIENTALI
+     - Il Giocatore lancia SEMPRE i suoi dadi per superare l'ostacolo (es. Destrezza + Atletica, Prontezza + Furtività).
+     - Se fallisce (0 successi): DIVIETO DI BLOCCO CIECO O MORTE. La fuga continua, ma il giocatore accumula attrito narrativo (es. inciampa, viene rallentato o subisce 1 danno da caduta/impatto) e il Narratore propone subito una nuova via o una scelta immediata finché non trova il varco con un successo!
 4. GESTIONE SALUTE A ZERO & "FAIL FORWARD" (SALVAGUARDIA DELLA CAMPAGNA):
    - Se la Salute del protagonista scende a zero, DIVIETO DI MORTE ISTANTANEA ARBITRARIA: il personaggio cade privo di sensi o in agonia critica.
    - Il Narratore crea una svolta drammatica coerente con la trama: soccorso urgente dei compagni [Medicina], sacrificio/diversivo di un PNG alleato per fuggire, oppure cattura e prigionia per interrogarlo, permettendo alla cronaca di continuare!
@@ -365,6 +376,7 @@ function parseAIResponse(
   obstacleSpawn?: Omit<DynamicObstacle, 'id' | 'currentSuccesses'>;
   enemySpawns?: EnemySpawnSpec[];
   playerDamage?: { points: number; type: DamageType; reason?: string };
+  enemyAttackRoll?: EnemyAttackRollSpec;
   playerHeal?: { points: number; type?: DamageType; reason?: string };
   suggestedMapName?: string;
   battlemap?: BattlemapSpec;
@@ -377,6 +389,7 @@ function parseAIResponse(
   let itemAward: { name: string; description: string } | undefined = undefined;
   let obstacleSpawn: Omit<DynamicObstacle, 'id' | 'currentSuccesses'> | undefined = undefined;
   let playerDamage: { points: number; type: DamageType; reason?: string } | undefined = undefined;
+  let enemyAttackRoll: EnemyAttackRollSpec | undefined = undefined;
   let playerHeal: { points: number; type?: DamageType; reason?: string } | undefined = undefined;
   const enemySpawns: EnemySpawnSpec[] = [];
 
@@ -486,6 +499,70 @@ function parseAIResponse(
     } catch {}
   }
 
+  // Estrazione Tiro Contrattacco Nemico (Livello 1: Scontri Tattici Seri)
+  const enemyRollMatch = rawText.match(/\[\[(?:TIRO_NEMICO|ENEMY_ROLL):\s*(\{.*?\})\s*\]\]/s);
+  if (enemyRollMatch) {
+    try {
+      const parsed = JSON.parse(enemyRollMatch[1]);
+      const attackerName = String(parsed.attacker || parsed.attackerName || 'Nemico');
+      const attackPool = Math.max(1, parseInt(parsed.pool || parsed.attackPool, 10) || 6);
+
+      let dice = Array.isArray(parsed.dice) && parsed.dice.length > 0
+        ? parsed.dice.map((d: any) => Math.min(10, Math.max(1, parseInt(d, 10) || 1)))
+        : Array.from({ length: attackPool }, () => Math.floor(Math.random() * 10) + 1);
+
+      const rawSuccesses = dice.filter((d: number) => d >= 8).length;
+      const successes = typeof parsed.successes === 'number' ? parsed.successes : rawSuccesses;
+      const defenseSubtracted = Math.max(0, parseInt(parsed.defense || parsed.defenseSubtracted, 10) || 0);
+      const netSuccesses = typeof parsed.netSuccesses === 'number' ? parsed.netSuccesses : Math.max(0, successes - defenseSubtracted);
+      const rawType = String(parsed.damageType || parsed.type || 'lethal').toLowerCase();
+      const damageType: DamageType = rawType === 'aggravated' || rawType === 'bashing' ? rawType : 'lethal';
+      const actionDescription = parsed.action || parsed.actionDescription || undefined;
+
+      enemyAttackRoll = {
+        attackerName,
+        attackPool,
+        dice,
+        successes,
+        defenseSubtracted,
+        netSuccesses,
+        damageType,
+        actionDescription,
+      };
+
+      if (netSuccesses > 0 && !playerDamage) {
+        playerDamage = {
+          points: netSuccesses,
+          type: damageType,
+          reason: `Attacco di ${attackerName} andato a segno`,
+        };
+      }
+
+      cleanedText = cleanedText.replace(enemyRollMatch[0], '').trim();
+    } catch {}
+  }
+
+  // Failsafe: se c'è playerDamage inflitto da un nemico ma manca TIRO_NEMICO, genera dadi coerenti per trasparenza
+  if (playerDamage && !enemyAttackRoll && playerDamage.reason && (
+    /nemico|avversario|mostro|guardia|robot|creatura|soldato|automa|segugio|sicario|fendente|sparo|artigli/i.test(playerDamage.reason)
+  )) {
+    const pts = playerDamage.points || 1;
+    const pool = Math.max(pts + 3, 6);
+    const successDice = Array.from({ length: pts }, () => Math.floor(Math.random() * 3) + 8);
+    const failDice = Array.from({ length: pool - pts }, () => Math.floor(Math.random() * 7) + 1);
+    const dice = [...successDice, ...failDice].sort(() => Math.random() - 0.5);
+    enemyAttackRoll = {
+      attackerName: playerDamage.reason.replace(/^(danno|attacco|colpo)\s+(da|di)?/i, '').trim() || 'Avversario',
+      attackPool: pool,
+      dice,
+      successes: pts,
+      defenseSubtracted: 0,
+      netSuccesses: pts,
+      damageType: playerDamage.type,
+      actionDescription: playerDamage.reason,
+    };
+  }
+
   // Estrazione Cura al Giocatore
   const healMatch = rawText.match(/\[\[CURA_GIOCATORE:\s*(\{.*?\})\s*\]\]/s);
   if (healMatch) {
@@ -585,6 +662,7 @@ function parseAIResponse(
     obstacleSpawn,
     enemySpawns: enemySpawns.length > 0 ? enemySpawns : undefined,
     playerDamage,
+    enemyAttackRoll,
     playerHeal,
     suggestedMapName,
     battlemap,

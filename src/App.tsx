@@ -950,6 +950,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
             xpAward: response.xpAward,
             itemAward: response.itemAward,
             playerDamageAward: response.playerDamage,
+            enemyAttackRoll: response.enemyAttackRoll,
             playerHealAward: response.playerHeal,
           };
 
@@ -1208,6 +1209,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         xpAward: response.xpAward,
         itemAward: response.itemAward,
         playerDamageAward: response.playerDamage,
+        enemyAttackRoll: response.enemyAttackRoll,
         playerHealAward: response.playerHeal,
         battlemap: response.battlemap,
         handout: response.handout,
@@ -1338,6 +1340,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         xpAward: response.xpAward,
         itemAward: response.itemAward,
         playerDamageAward: response.playerDamage,
+        enemyAttackRoll: response.enemyAttackRoll,
         playerHealAward: response.playerHeal,
         battlemap: response.battlemap,
         handout: response.handout,
@@ -1576,6 +1579,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         xpAward: response.xpAward,
         itemAward: response.itemAward,
         playerDamageAward: response.playerDamage,
+        enemyAttackRoll: response.enemyAttackRoll,
         playerHealAward: response.playerHeal,
         battlemap: response.battlemap,
         handout: response.handout,

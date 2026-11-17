@@ -1333,6 +1333,36 @@ export const MobilePlayerView: React.FC<MobilePlayerViewProps> = ({ roomCode, on
                 )
               )}
 
+              {/* Feedback Lancio Dadi Nemico su Mobile */}
+              {latestStoryMessage.enemyAttackRoll && (
+                <div className="p-3 bg-red-950/80 border border-red-700/80 rounded-xl space-y-1.5 mt-2">
+                  <div className="flex items-center justify-between gap-1 text-[11px] font-mono font-bold">
+                    <span className="text-red-300 flex items-center gap-1.5">
+                      <Dices className="w-3.5 h-3.5 text-red-400" />
+                      🎲 {latestStoryMessage.enemyAttackRoll.attackerName}
+                    </span>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                      latestStoryMessage.enemyAttackRoll.netSuccesses > 0 ? 'bg-red-900 text-red-200' : 'bg-emerald-950 text-emerald-300'
+                    }`}>
+                      {latestStoryMessage.enemyAttackRoll.netSuccesses > 0 ? 'COLPITO' : 'SCHIVATO'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-[10px] font-mono text-slate-400">Dadi:</span>
+                    {latestStoryMessage.enemyAttackRoll.dice.map((d, i) => (
+                      <span
+                        key={i}
+                        className={`w-5 h-5 rounded flex items-center justify-center font-mono text-[10px] font-bold border ${
+                          d >= 8 ? 'bg-red-900 border-red-400 text-white' : 'bg-slate-900 border-slate-700 text-slate-400'
+                        }`}
+                      >
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Feedback Ferita Subita su Mobile */}
               {latestStoryMessage.playerDamageAward && (
                 <div className="p-2.5 bg-red-950/80 border border-red-600/80 rounded-xl flex items-center justify-between text-xs mt-2">

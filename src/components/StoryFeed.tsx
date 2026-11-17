@@ -472,6 +472,62 @@ export const StoryFeed: React.FC<StoryFeedProps> = ({
                   </div>
                 )}
 
+                {/* Banner Lancio Dadi Contrattacco Nemico (Livello 1: Scontri Tattici Seri) */}
+                {msg.enemyAttackRoll && (
+                  <div className="mt-3 p-3.5 bg-gradient-to-r from-red-950/90 via-slate-950 to-red-950/90 border border-red-700/80 rounded-2xl shadow-xl space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-red-900/60 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <Dices className="w-4 h-4 text-red-400 shrink-0" />
+                        <span className="font-mono font-bold text-xs uppercase text-red-300">
+                          🎲 Contrattacco Nemico: {msg.enemyAttackRoll.attackerName}
+                        </span>
+                      </div>
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border ${
+                        msg.enemyAttackRoll.netSuccesses > 0
+                          ? 'bg-red-950 border-red-500 text-red-300'
+                          : 'bg-emerald-950 border-emerald-500 text-emerald-300'
+                      }`}>
+                        {msg.enemyAttackRoll.netSuccesses > 0
+                          ? `COLPITO! (${msg.enemyAttackRoll.netSuccesses} ${msg.enemyAttackRoll.netSuccesses === 1 ? 'Successo Netto' : 'Successi Netti'})`
+                          : 'PARATO / SCHIVATO (0 Successi Netti)'}
+                      </span>
+                    </div>
+
+                    {/* Risultato Dadi D10 Nemici */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[11px] font-mono text-slate-400">Dadi D10 ({msg.enemyAttackRoll.attackPool}):</span>
+                        <div className="flex flex-wrap gap-1">
+                          {msg.enemyAttackRoll.dice.map((die, idx) => (
+                            <span
+                              key={idx}
+                              className={`w-6 h-6 rounded flex items-center justify-center font-mono font-bold text-xs border ${
+                                die >= 8
+                                  ? 'bg-red-900/90 border-red-400 text-white shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+                                  : 'bg-slate-900 border-slate-700 text-slate-400'
+                              }`}
+                            >
+                              {die}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-300">
+                        Successi (8+): <strong className="text-red-300">{msg.enemyAttackRoll.successes}</strong>
+                        {msg.enemyAttackRoll.defenseSubtracted > 0 && (
+                          <span> | Difesa: <strong className="text-emerald-400">-{msg.enemyAttackRoll.defenseSubtracted}</strong></span>
+                        )}
+                      </div>
+                    </div>
+
+                    {msg.enemyAttackRoll.actionDescription && (
+                      <div className="text-xs text-red-200/90 font-serif italic pt-1 border-t border-red-900/40">
+                        «{msg.enemyAttackRoll.actionDescription}»
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Banner Danno Subito dal Protagonista */}
                 {msg.playerDamageAward && (
                   <div className="mt-3 p-3 bg-gradient-to-r from-red-950/80 via-rose-950/80 to-slate-950 border border-red-600/80 rounded-xl shadow flex items-center justify-between font-sans">

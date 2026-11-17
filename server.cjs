@@ -421,6 +421,73 @@ function parseAIResponse(rawText, defaultSuggestions) {
     } catch {}
   }
 
+  // Estrazione Tiro Contrattacco Nemico (Livello 1: Scontri Tattici Seri)
+  let enemyAttackRoll = undefined;
+  const enemyRollMatch = rawText.match(/\[\[(?:TIRO_NEMICO|ENEMY_ROLL):\s*(\{.*?\})\s*\]\]/s);
+  if (enemyRollMatch) {
+    try {
+      const parsed = JSON.parse(enemyRollMatch[1]);
+      const attackerName = String(parsed.attacker || parsed.attackerName || 'Nemico');
+      const attackPool = Math.max(1, parseInt(parsed.pool || parsed.attackPool, 10) || 6);
+
+      let dice = Array.isArray(parsed.dice) && parsed.dice.length > 0
+        ? parsed.dice.map((d) => Math.min(10, Math.max(1, parseInt(d, 10) || 1)))
+        : Array.from({ length: attackPool }, () => Math.floor(Math.random() * 10) + 1);
+
+      const rawSuccesses = dice.filter((d) => d >= 8).length;
+      const successes = typeof parsed.successes === 'number' ? parsed.successes : rawSuccesses;
+      const defenseSubtracted = Math.max(0, parseInt(parsed.defense || parsed.defenseSubtracted, 10) || 0);
+      const netSuccesses = typeof parsed.netSuccesses === 'number' ? parsed.netSuccesses : Math.max(0, successes - defenseSubtracted);
+      const rawType = String(parsed.damageType || parsed.type || 'lethal').toLowerCase();
+      const damageType = rawType === 'aggravated' || rawType === 'bashing' ? rawType : 'lethal';
+      const actionDescription = parsed.action || parsed.actionDescription || undefined;
+
+      enemyAttackRoll = {
+        attackerName,
+        attackPool,
+        dice,
+        successes,
+        defenseSubtracted,
+        netSuccesses,
+        damageType,
+        actionDescription,
+      };
+
+      if (netSuccesses > 0 && !playerDamage) {
+        playerDamage = {
+          points: netSuccesses,
+          type: damageType,
+          reason: `Attacco di ${attackerName} andato a segno`,
+        };
+      }
+
+      cleanedText = cleanedText.replace(enemyRollMatch[0], '').trim();
+    } catch (e) {
+      console.warn('Errore parsing TIRO_NEMICO:', e);
+    }
+  }
+
+  // Failsafe: se c'è playerDamage inflitto da un nemico ma manca TIRO_NEMICO, genera dadi coerenti per trasparenza
+  if (playerDamage && !enemyAttackRoll && playerDamage.reason && (
+    /nemico|avversario|mostro|guardia|robot|creatura|soldato|automa|segugio|sicario|fendente|sparo|artigli/i.test(playerDamage.reason)
+  )) {
+    const pts = playerDamage.points || 1;
+    const pool = Math.max(pts + 3, 6);
+    const successDice = Array.from({ length: pts }, () => Math.floor(Math.random() * 3) + 8);
+    const failDice = Array.from({ length: pool - pts }, () => Math.floor(Math.random() * 7) + 1);
+    const dice = [...successDice, ...failDice].sort(() => Math.random() - 0.5);
+    enemyAttackRoll = {
+      attackerName: playerDamage.reason.replace(/^(danno|attacco|colpo)\s+(da|di)?/i, '').trim() || 'Avversario',
+      attackPool: pool,
+      dice,
+      successes: pts,
+      defenseSubtracted: 0,
+      netSuccesses: pts,
+      damageType: playerDamage.type,
+      actionDescription: playerDamage.reason,
+    };
+  }
+
   // Estrazione Cura al Giocatore
   let playerHeal = undefined;
   const healMatch = rawText.match(/\[\[CURA_GIOCATORE:\s*(\{.*?\})\s*\]\]/s);
@@ -521,6 +588,7 @@ function parseAIResponse(rawText, defaultSuggestions) {
     obstacleSpawn,
     enemySpawns: enemySpawns.length > 0 ? enemySpawns : undefined,
     playerDamage,
+    enemyAttackRoll,
     playerHeal,
     suggestedMapName,
     battlemap,
@@ -1430,17 +1498,25 @@ REGOLE ESSENZIALI DI GIOCO:
      [[TIRO: {"attribute": "Destrezza", "ability": "Armi da Fuoco", "difficulty": 8, "modifier": -5, "reason": "Colpire il punto debole del medaglione"}]]
    - Se non ci sono modificatori particolari:
      [[TIRO: {"attribute": "Destrezza", "ability": "Armi da Fuoco", "difficulty": 8, "reason": "Centrare il bersaglio in movimento"}]]
-4. CONSEGUENZE DEI TIRI, COMBATTIMENTO E DINAMICA AZIONE-REAZIONE (PARITÀ ASSOLUTA - NO PLOT ARMOR):
-   - NESSUN PRIVILEGIO PER I GIOCATORI: I protagonisti NON sono intoccabili o divinità invulnerabili. Sanguinano, soffrono il dolore e rischiano la vita ad ogni errore tattico.
-   - DINAMICA NATURALE DEI FALLIMENTI (NESSUN DANNO ARBITRARIO, MA REAZIONE TATTICA DEI NEMICI):
-     • Se il giocatore fallisce un tiro (0 successi) o compie un'azione incauta/esposta, NON subisce danno automatico o punitivo dal nulla. L'attacco va a vuoto, l'arma rimbalza su un riparo/armatura o il personaggio si sbilancia perdendo temporaneamente la Difesa o la copertura.
-     • L'avversario presente COGLIE IMMEDIATAMENTE L'APERTURA e risponde contrattaccando nel momento della vulnerabilità!
-     • CALCOLO EFFETTIVO DEL TIRO NEMICO (RISERVA NEMICO CONTRO DIFESA GIOCATORE):
-       Il Narratore calcola l'attacco del nemico usando la sua Riserva Dadi (attackPool, tipicamente da 6 a 9 dadi D10 contro la Difesa e l'Armatura del bersaglio):
-       - Se l'attacco nemico ottiene successi netti (> 0): il colpo VA A SEGNO PER DAVVERO! Descrivi la ferita, il sangue o l'impatto brutale e inserisci OBBLIGATORIAMENTE il blocco di aggiornamento Salute:
-         [[DANNO_GIOCATORE: {"points": X, "type": "lethal", "reason": "Contrattacco nemico andato a segno"}]]
-       - Se l'attacco nemico fa 0 successi netti: il nemico sferra il fendente o spara, ma il giocatore riesce a parare disperatamente all'ultimo secondo o a tuffarsi dietro un riparo.
-     • È TASSATIVAMENTE VIETATO far esitare i nemici senza motivo, farli limitare a ringhiare o minacciare a parole se hanno la linea di tiro o la lama a portata, o "tirare indietro i colpi" per pietà del giocatore!
+4. GESTIONE DEI CONFLITTI E COMBATTIMENTO (SISTEMA A 3 LIVELLI CHRONICA - UNIVERSALE PER OGNI AMBIENTAZIONE/EPOCA):
+   Il giocatore lancia SEMPRE i suoi dadi per qualsiasi sua azione (attacco, manovra, salto, fuga). La reazione del mondo segue 3 livelli:
+
+   • LIVELLO 1: SCONTRI TATTICI SERI, BOSS, MOSTRI & AVVERSARI LETALI
+     - Quando un nemico primario o mostro contrattacca o colpisce, il Narratore DEVE mostrare il tiro palese dei dadi D10 del nemico contro la Difesa del giocatore:
+       [[TIRO_NEMICO: {"attacker": "Nome Nemico", "pool": 6, "dice": [9, 8, 4, 3, 2, 1], "successes": 2, "defenseSubtracted": 1, "netSuccesses": 1, "damageType": "lethal", "action": "Fendente o colpo mirato"}]]
+       - Se netSuccesses > 0: Il colpo va a segno e infligge N ferite reali: inserisci anche [[DANNO_GIOCATORE: {"points": N, "type": "lethal", "reason": "Contrattacco nemico"}]]
+       - Se netSuccesses == 0: L'attacco nemico fa 0 successi netti, viene parato o schivato dal giocatore! Nessun danno subito.
+
+   • LIVELLO 2: SCARAMUCCE VELOCI, RISSE DA TAVERNA, BARUFFE & GUARDIE GENERICHE
+     - Il Giocatore lancia SEMPRE i suoi dadi (es. Forza + Lotta, o Destrezza + Mischia). Il tiro del giocatore è sacro!
+     - Per mantenere il ritmo cinematografico e rapido, NON si genera il tiro del singolo nemico generico.
+     - L'esito si risolve direttamente dal tiro del giocatore:
+       - Successi del giocatore: atterra o sbaraglia gli avversari.
+       - 0 o 1 solo successo: il giocatore subisce un contraccolpo fluido nella mischia (es. un pugno di striscio o una contusione) inserendo direttamente: [[DANNO_GIOCATORE: {"points": 1, "type": "bashing", "reason": "Colpo di striscio nella mischia"}]].
+
+   • LIVELLO 3: INSEGUIMENTI, POSTI DI BLOCCO, FUGHE & OSTACOLI AMBIENTALI
+     - Il Giocatore lancia SEMPRE i suoi dadi per superare l'ostacolo (es. Destrezza + Atletica, Prontezza + Furtività).
+     - Se fallisce (0 successi): DIVIETO DI BLOCCO CIECO O MORTE. La fuga continua, ma il giocatore accumula attrito narrativo (es. inciampa, viene rallentato o subisce 1 danno da caduta/impatto) e il Narratore propone subito una nuova via o una scelta immediata finché non trova il varco con un successo!
    - SUCCESSUALITÀ DEI TIRI: Successo (1-4 successi) / Successo Eccezionale (5+ successi): basta 1 solo successo per superare un'azione standard! SE IL GIOCATORE HA OTTENUTO SUCCESSI E HA FORNITO UNA "Narrazione del Giocatore", ACCETTA E CONFERMA AL 100% QUANTO NARRATO DAL GIOCATORE!
    - COMBATTIMENTO IN UN SOLO TIRO: Nel Chronica Engine NON esiste un secondo tiro per i danni né un tiro di assorbimento! Difesa e Armatura vengono sottratte direttamente dalla riserva d'attacco e OGNI SUCCESSO NETTO OTTENUTO INFLIGGE DIRETTAMENTE 1 PUNTO SALUTE DI DANNO (Contundente /, Letale X o Aggravato *).
 5. PREMIO PUNTI ESPERIENZA (XP) E COSTI DELLO SCHERMO:

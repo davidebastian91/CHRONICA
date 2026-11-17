@@ -402,6 +402,17 @@ export interface ActiveCombatEnemy {
   isDefeated?: boolean;
 }
 
+export interface EnemyAttackRollSpec {
+  attackerName: string;
+  attackPool: number;
+  dice: number[];
+  successes: number;
+  defenseSubtracted: number;
+  netSuccesses: number; // > 0 colpo a segno (danno = netSuccesses), == 0 parato/schivato
+  damageType: DamageType;
+  actionDescription?: string;
+}
+
 export interface StoryMessage {
   id: string;
   sender: 'narrator' | 'player' | 'system';
@@ -413,6 +424,7 @@ export interface StoryMessage {
   requiredRoll?: RequiredRoll;
   obstacleSpawn?: Omit<DynamicObstacle, 'id' | 'currentSuccesses'>;
   enemySpawns?: EnemySpawnSpec[];
+  enemyAttackRoll?: EnemyAttackRollSpec;
   xpAward?: {
     amount: number;
     reason: string;
