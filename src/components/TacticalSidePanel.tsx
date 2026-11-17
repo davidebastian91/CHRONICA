@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { CampaignConfig, HandoutSpec } from '../types';
 import { TacticalSketchView } from './TacticalSketchView';
+import { generateThematicDistricts, isDistrictsMismatchingEra } from '../utils/districtGenerator';
 import {
   Map,
   Compass,
@@ -48,6 +49,19 @@ export const TacticalSidePanel: React.FC<TacticalSidePanelProps> = ({
 
   const maps = campaign.maps || [];
   const activeMap = maps.find((m) => m.id === campaign.activeMapId) || maps[0];
+
+  const sideDistricts = React.useMemo(() => {
+    let list =
+      campaign.cityDistricts && campaign.cityDistricts.length > 0
+        ? campaign.cityDistricts
+        : generateThematicDistricts(campaign.era, campaign.city);
+    if (isDistrictsMismatchingEra(list, campaign.era)) {
+      list = generateThematicDistricts(campaign.era, campaign.city);
+    }
+    return list;
+  }, [campaign.cityDistricts, campaign.era, campaign.city]);
+
+  const sidePartyDistrict = sideDistricts.find((d) => d.id === campaign.activeDistrictId) || sideDistricts[0];
 
   return (
     <div
@@ -180,16 +194,73 @@ export const TacticalSidePanel: React.FC<TacticalSidePanelProps> = ({
                       onClick={onOpenFullMapModal}
                     />
                   ) : (
-                    <div className="text-center p-6 text-slate-500">
-                      <MapPin className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      <p className="text-xs font-serif">Mappa vettoriale automatica di {campaign.city}</p>
+                    <div
+                      onClick={onOpenFullMapModal}
+                      className="w-full h-full relative cursor-pointer bg-[#0c101a] p-2 flex flex-col items-center justify-center overflow-hidden group select-none"
+                      title="Clicca per aprire la Mappa a Schermo Intero"
+                    >
+                      {/* Mini SVG Preview dei Distretti Dinamici */}
+                      <svg viewBox="0 0 100 100" className="w-full h-full max-h-[250px] transition-transform duration-300 group-hover:scale-[1.03]">
+                        <defs>
+                          <pattern id="tactical-grid-mini" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#334155" strokeWidth="0.3" strokeOpacity="0.25" />
+                          </pattern>
+                        </defs>
+                        <rect width="100" height="100" fill="url(#tactical-grid-mini)" />
+
+                        {/* Poligoni dei Distretti */}
+                        {sideDistricts.map((d) => {
+                          const isPartyHere = d.id === sidePartyDistrict?.id;
+                          const pts = d.polyPoints.map((p) => p.join(',')).join(' ');
+                          return (
+                            <g key={d.id}>
+                              <polygon
+                                points={pts}
+                                fill={isPartyHere ? `${d.factionColor}38` : '#1e293b55'}
+                                stroke={isPartyHere ? d.factionColor : '#475569'}
+                                strokeWidth={isPartyHere ? '1.8' : '0.8'}
+                                strokeDasharray={isPartyHere ? undefined : '2,1'}
+                                className="transition-all"
+                              />
+                              <text
+                                x={d.centerPoint[0]}
+                                y={d.centerPoint[1] - 1}
+                                textAnchor="middle"
+                                fill={isPartyHere ? '#ffffff' : '#94a3b8'}
+                                fontSize="4.2"
+                                fontFamily="serif"
+                                fontWeight={isPartyHere ? '900' : 'bold'}
+                              >
+                                {d.name.split('&')[0].trim()}
+                              </text>
+                            </g>
+                          );
+                        })}
+
+                        {/* Segnalino Animato Gruppo ("Voi Siete Qui") */}
+                        {sidePartyDistrict && (
+                          <g transform={`translate(${sidePartyDistrict.centerPoint[0]}, ${sidePartyDistrict.centerPoint[1] + 5})`}>
+                            <circle r="4.5" fill="#f59e0b" opacity="0.4" className="animate-ping" />
+                            <circle r="2.8" fill="#f59e0b" stroke="#ffffff" strokeWidth="0.7" />
+                            <polygon points="0,-1.5 1,1.5 -1,1.5" fill="#000" />
+                          </g>
+                        )}
+                      </svg>
+
+                      {/* Badge Posizione Corrente della Squadra */}
+                      <div className="absolute bottom-2 left-2 right-20 px-2.5 py-1 rounded-xl bg-slate-950/90 border border-amber-600/60 backdrop-blur-md shadow-lg flex items-center space-x-1.5 text-[11px] font-serif truncate">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                        <span className="text-amber-200 truncate">
+                          Gruppo: <strong className="text-white">{sidePartyDistrict?.name?.split('&')[0]?.trim() || campaign.city}</strong>
+                        </span>
+                      </div>
                     </div>
                   )}
 
                   {/* Badge Nome Mappa Attiva in Sovrimpressione */}
-                  <div className="absolute top-2 left-2 px-2.5 py-1 rounded-xl bg-slate-950/80 backdrop-blur-md border border-slate-800 text-xs font-serif font-bold text-slate-200 shadow-lg flex items-center space-x-1.5">
+                  <div className="absolute top-2 left-2 px-2.5 py-1 rounded-xl bg-slate-950/80 backdrop-blur-md border border-slate-800 text-xs font-serif font-bold text-slate-200 shadow-lg flex items-center space-x-1.5 pointer-events-none">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>{activeMap?.name || campaign.city}</span>
+                    <span>{activeMap?.name || `Distretti: ${campaign.city}`}</span>
                   </div>
 
                   {/* Pulsante Ingrandisci in Sovrimpressione */}

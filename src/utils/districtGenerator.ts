@@ -145,6 +145,146 @@ const PRESETS: Record<string, EraPreset> = {
     ],
   },
 
+  imperial_china: {
+    districts: [
+      {
+        name: 'Città Imperiale & Palazzo Daming',
+        subtitle: 'Bastione del Trono del Drago',
+        description: 'Mura vermiglie colossali, padiglioni con tetti a pagoda dorati e guardie d’élite in armature lamellari con alabarde Ji.',
+        faction: 'Guardia Imperiale del Drago & Concilio dei Mandarini',
+        factionColor: '#eab308',
+        defaultAlert: 'patrolled',
+        iconName: 'Crown',
+        landmarks: [
+          { id: 'cn_1', name: 'Sala del Trono del Drago', desc: 'Dove si emanano gli editti imperiali e si ricevono i tributi.', type: 'elysium' },
+          { id: 'cn_2', name: 'Armeria Imperiale & Padiglione delle Guardie', desc: 'Arsenale di balestre a ripetizione Zhuge e lame d’acciaio piegato.', type: 'point' },
+        ],
+      },
+      {
+        name: 'Mercato Orientale & Botteghe della Seta',
+        subtitle: 'Il grande centro commerciale e di giada',
+        description: 'Insegne in legno dorato, banchi di giada preziosa, rotoli di seta finissima, case da tè eleganti e profumo d’incenso.',
+        faction: 'Gilda dei Mercanti della Seta & Funzionari delle Tasse',
+        factionColor: '#06b6d4',
+        defaultAlert: 'safe',
+        iconName: 'Building',
+        landmarks: [
+          { id: 'cn_3', name: 'Emporio Centrale della Giada', desc: 'Pietre intagliate, talismani e scambi commerciali di alto livello.', type: 'point' },
+          { id: 'cn_4', name: 'Casa da Tè del Loto Bianco', desc: 'Salette appartate per poeti, nobili e informatori discreti.', type: 'haven' },
+        ],
+      },
+      {
+        name: 'Grande Pagoda & Distretto dei Templi',
+        subtitle: 'Santuari buddisti, monasteri e giardini sacri',
+        description: 'Grandi campane di bronzo riecheggianti, fumo d’incenso, padiglioni di meditazione e monaci guerrieri wuxia.',
+        faction: 'Monaci Guerrieri & Ordini Filosofici',
+        factionColor: '#10b981',
+        defaultAlert: 'safe',
+        iconName: 'Mountain',
+        landmarks: [
+          { id: 'cn_5', name: 'Grande Pagoda dell’Oca Selvatica', desc: 'Luogo sacro dove sono custoditi rotoli e sutra millenari.', type: 'elysium' },
+          { id: 'cn_6', name: 'Cortile del Bastone Spezzato', desc: 'Spiazzo di pietra dove si perfezionano le arti marziali e l’alchimia del Qi.', type: 'haven' },
+        ],
+      },
+      {
+        name: 'Mercato Occidentale & Quartiere delle Carovane',
+        subtitle: 'Capolinea leggendario della Via della Seta',
+        description: 'Bazar caotico di carovane giunte dal deserto: mercanti persiani, cammelli carichi di spezie, vetri e vino d’occidente.',
+        faction: 'Carovanieri della Via della Seta & Interpreti Esteri',
+        factionColor: '#f59e0b',
+        defaultAlert: 'patrolled',
+        iconName: 'Compass',
+        landmarks: [
+          { id: 'cn_7', name: 'Bazar delle Spezie & Scuderie dei Cavalli Celesti', desc: 'Punto di ristoro per viaggiatori transcontinentali.', type: 'point' },
+          { id: 'cn_8', name: 'Locanda del Falcone del Deserto', desc: 'Bicchieri di vino d’uva, danze esotiche e incontri tra stranieri.', type: 'haven' },
+        ],
+      },
+      {
+        name: 'Città Bassa & Vicoli delle Lanterne Rosse',
+        subtitle: 'Labirinto di canali, bische e società segrete',
+        description: 'Foschia che sale dai canali, lanterne rosse oscillanti, fumerie d’oppio ed erbe, bische di mahjong e cospiratori.',
+        faction: 'Società Segreta del Loto Bianco & Barcaioli',
+        factionColor: '#ef4444',
+        defaultAlert: 'lockdown',
+        iconName: 'Flame',
+        landmarks: [
+          { id: 'cn_9', name: 'Bisca della Luna Nuova', desc: 'Tavoli da gioco clandestini dove si scommette la vita e l’oro.', type: 'crime' },
+          { id: 'cn_10', name: 'Molo Segreto del Canale Sud', desc: 'Chiatte coperte usate per fuggire oltre le mura della città di notte.', type: 'haven' },
+        ],
+      },
+    ],
+  },
+
+  feudal_japan: {
+    districts: [
+      {
+        name: 'Castello del Daimyo & Tenshu',
+        subtitle: 'Fortezza centrale e residenza del Signore',
+        description: 'Fossati d’acqua limpidi, mura ciclopiche in pietra bianca, porte rinforzate in ferro e guardie d’onore con kabuto e katana.',
+        faction: 'Guardia del Clan del Daimyo & Hatamoto',
+        factionColor: '#eab308',
+        defaultAlert: 'patrolled',
+        iconName: 'Castle',
+        landmarks: [
+          { id: 'jp_1', name: 'Torre del Mastio (Tenshu)', desc: 'Il cuore strategico dove il signore della guerra impartisce gli ordini.', type: 'elysium' },
+          { id: 'jp_2', name: 'Dojo dei Samurai di Corte', desc: 'Tatami dove si allenano i maestri di spada del clan.', type: 'point' },
+        ],
+      },
+      {
+        name: 'Borgo degli Artigiani & Fucine dei Fabbri',
+        subtitle: 'Maestri forgiatori di lame e setaioli',
+        description: 'Suono ritmico dei martelli sulle lame piegate, odore di carbone dolce e botteghe di armature e ceramica laccata.',
+        faction: 'Gilda dei Maestri Spadari & Artigiani',
+        factionColor: '#f59e0b',
+        defaultAlert: 'safe',
+        iconName: 'Flame',
+        landmarks: [
+          { id: 'jp_3', name: 'Forgia del Maestro Muramasa', desc: 'Lame leggendarie temperate con maestria e rituali shintoisti.', type: 'point' },
+          { id: 'jp_4', name: 'Magazzino della Seta e Lacche', desc: 'Rotoli di stoffa pregiata e armature decorate.', type: 'haven' },
+        ],
+      },
+      {
+        name: 'Santuario dei Torii & Bosco degli Spiriti',
+        subtitle: 'Santuari scintoisti, sacerdoti e alberi millenari',
+        description: 'Portali Torii rossi vermigli che si inoltrano nella foresta di bambù, lanterne di pietra coperte di muschio e spiriti Kami.',
+        faction: 'Sacerdoti Kannushi & Monaci Sohei',
+        factionColor: '#10b981',
+        defaultAlert: 'safe',
+        iconName: 'Mountain',
+        landmarks: [
+          { id: 'jp_5', name: 'Santuario Maggiore dei Kami Celesti', desc: 'Offerte di sake, riso e preghiere di protezione per i guerrieri.', type: 'elysium' },
+          { id: 'jp_6', name: 'Grotta delle Acque Sacre', desc: 'Sorgente purificatrice immersa nel silenzio dei bambù.', type: 'haven' },
+        ],
+      },
+      {
+        name: 'Distretto dei Piaceri di Ukiyo & Sale da Tè',
+        subtitle: 'Il Mondo Fluttuante: lanterne, teatri e musica di shamisen',
+        description: 'Melodie di shamisen nell’aria serale, geishe, attori di kabuki, sale da tè illuminate e banchi di street food tradizionale.',
+        faction: 'Locandieri & Maestri del Mondo Fluttuante',
+        factionColor: '#ec4899',
+        defaultAlert: 'patrolled',
+        iconName: 'Wine',
+        landmarks: [
+          { id: 'jp_7', name: 'Casa da Tè dei Ciliegi Notturni', desc: 'Ambiente raffinato dove si negoziano alleanze e tregue segrete.', type: 'haven' },
+          { id: 'jp_8', name: 'Teatro Kabuki delle Maschere', desc: 'Rappresentazioni drammatiche con passaggi nascosti dietro le quinte.', type: 'point' },
+        ],
+      },
+      {
+        name: 'Porto dei Pescatori & Baia degli Shinobi',
+        subtitle: 'Banchine nella nebbia, chiatte di contrabbando e mercenari',
+        description: 'Reti da pesca stese ad asciugare al tramonto, moli scricchiolanti nella nebbia marina e ombre furtive sui tetti.',
+        faction: 'Clan Ninja Ombra & Contrabbandieri Portuali',
+        factionColor: '#ef4444',
+        defaultAlert: 'lockdown',
+        iconName: 'Anchor',
+        landmarks: [
+          { id: 'jp_9', name: 'Taverna del Pesce Salato', desc: 'Locanda malfamata frequentata da ronin senza padrone e mercenari.', type: 'crime' },
+          { id: 'jp_10', name: 'Cantiere dei Barcaioli della Notte', desc: 'Imbarcazioni a fondo piatto per sbarchi stealth lungo la costa.', type: 'crime' },
+        ],
+      },
+    ],
+  },
+
   fantasy_realms: {
     districts: [
       {
@@ -366,8 +506,10 @@ export function generateThematicDistricts(era: string, cityName: string): CityDi
     presetKey = 'cyberpunk';
   } else if (normEra.includes('victor') || normEra.includes('noir') || normEra.includes('gothic') || normEra.includes('modern')) {
     presetKey = 'victorian';
-  } else if (normEra.includes('japan') || normEra.includes('china') || normEra.includes('wuxia') || normEra.includes('samurai')) {
-    presetKey = 'fantasy_realms';
+  } else if (normEra.includes('china') || normEra.includes('tang') || normEra.includes('ming') || normEra.includes('wuxia')) {
+    presetKey = 'imperial_china';
+  } else if (normEra.includes('japan') || normEra.includes('samurai') || normEra.includes('sengoku') || normEra.includes('edo') || normEra.includes('feudal')) {
+    presetKey = 'feudal_japan';
   }
 
   const selectedPreset = PRESETS[presetKey] || PRESETS.fantasy_realms;
@@ -388,4 +530,42 @@ export function generateThematicDistricts(era: string, cityName: string): CityDi
       iconName: d.iconName,
     };
   });
+}
+
+/**
+ * Controlla se i distretti salvati in memoria appartengono a un'altra epoca
+ * (ad esempio un preset fantasy generato prima dell'upgrade su una cronaca in Cina o nel West).
+ */
+export function isDistrictsMismatchingEra(districts: CityDistrict[], era: string): boolean {
+  if (!districts || districts.length === 0) return true;
+  const normEra = (era || '').toLowerCase().trim();
+  const names = districts.map((d) => d.name.toLowerCase()).join(' ');
+
+  // Se la cronaca è cinese ma ha nomi medievali europei o del West
+  if (
+    (normEra.includes('china') || normEra.includes('tang') || normEra.includes('ming') || normEra.includes('wuxia')) &&
+    (names.includes('cattedrale') || names.includes('rocca sovrana') || names.includes('saloon') || names.includes('whitechapel'))
+  ) {
+    return true;
+  }
+
+  // Se la cronaca è giapponese ma ha cattedrali o saloon
+  if (
+    (normEra.includes('japan') || normEra.includes('samurai') || normEra.includes('feudal')) &&
+    (names.includes('cattedrale') || names.includes('rocca sovrana') || names.includes('saloon'))
+  ) {
+    return true;
+  }
+
+  // Se la cronaca è del West ma ha cattedrali o torri corporative
+  if (normEra.includes('west') && (names.includes('cattedrale') || names.includes('sky-deck') || names.includes('daming'))) {
+    return true;
+  }
+
+  // Se la cronaca è cyberpunk ma ha saloon o cattedrali
+  if (normEra.includes('cyber') && (names.includes('saloon') || names.includes('cattedrale') || names.includes('forgiatori'))) {
+    return true;
+  }
+
+  return false;
 }

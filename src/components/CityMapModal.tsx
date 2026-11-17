@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, MapPin, Trash2, Compass, Upload, Navigation, Loader2, Plus, Landmark } from 'lucide-react';
+import { X, MapPin, Trash2, Compass, Upload, Navigation, Loader2, Plus, Landmark, Sparkles } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { CampaignConfig, CampaignMap, CityDistrict } from '../types';
 import { compressMapImage, safeLocalStorageSet } from '../utils/mapStorage';
-import { generateThematicDistricts } from '../utils/districtGenerator';
+import { generateThematicDistricts, isDistrictsMismatchingEra } from '../utils/districtGenerator';
 import { ThematicDistrictMapView } from './ThematicDistrictMapView';
 
 interface MapMarker {
@@ -38,39 +38,108 @@ const KNOWN_CITY_COORDINATES: Record<string, [number, number]> = {
   deadwood: [44.3769, -103.7296],
   dodgecity: [37.7528, -100.0171],
   sanfrancisco: [37.7749, -122.4194],
-  // Città Europee / Storiche
+  austin: [30.2672, -97.7431],
+  elpaso: [31.7619, -106.485],
+
+  // Oriente & Asia
+  changan: [34.3416, 108.9398],
+  xian: [34.3416, 108.9398],
+  pechino: [39.9042, 116.4074],
+  beijing: [39.9042, 116.4074],
+  shanghai: [31.2304, 121.4737],
+  luoyang: [34.6186, 112.4539],
+  hangzhou: [30.2741, 120.1551],
+  kyoto: [35.0116, 135.7681],
+  edo: [35.6762, 139.6503],
+  tokyo: [35.6762, 139.6503],
+  osaka: [34.6937, 135.5023],
+
+  // Città Europee & Storiche
   praga: [50.0755, 14.4378],
   londra: [51.5074, -0.1278],
+  london: [51.5074, -0.1278],
   milano: [45.4642, 9.19],
   roma: [41.9028, 12.4964],
+  rome: [41.9028, 12.4964],
   venezia: [45.4408, 12.3155],
+  firenze: [43.7696, 11.2558],
+  costantinopoli: [41.0082, 28.9784],
+  istanbul: [41.0082, 28.9784],
+  atene: [37.9838, 23.7275],
   newyork: [40.7128, -74.006],
   neworleans: [29.9511, -90.0715],
   parigi: [48.8566, 2.3522],
+  paris: [48.8566, 2.3522],
   berlino: [52.52, 13.405],
   boston: [42.3601, -71.0589],
   chicago: [41.8781, -87.6298],
-  kyoto: [35.0116, 135.7681],
-  changan: [34.3416, 108.9398],
-  xian: [34.3416, 108.9398],
   tortuga: [20.0573, -72.7936],
+  portroyal: [17.9369, -76.8413],
+  nassau: [25.0479, -77.3554],
+  ilcairo: [30.0444, 31.2357],
+  alessandria: [31.2001, 29.9187],
 };
 
-const TILE_LAYERS: Record<TileLayerStyle, { url: string; attribution: string; maxZoom: number }> = {
+export function resolveCityCoordinates(cityName: string, era?: string): [number, number] {
+  if (!cityName) return [34.3416, 108.9398];
+
+  // Rimuovi testo tra parentesi (es. "(Dinastia Tang 750 d.C.)")
+  const stripped = cityName.replace(/\([^)]*\)/g, '').trim();
+  const rawLower = stripped.toLowerCase();
+  const cleanAlpha = rawLower.replace(/[^a-z]/g, '');
+
+  // 1. Controllo esatto o per inclusione
+  for (const [key, coords] of Object.entries(KNOWN_CITY_COORDINATES)) {
+    if (cleanAlpha.includes(key) || key.includes(cleanAlpha) || rawLower.includes(key)) {
+      return coords;
+    }
+  }
+
+  // 2. Fallback sensato per epoca invece di forzare sempre Tombstone in Arizona!
+  const normEra = (era || '').toLowerCase();
+  if (normEra.includes('china') || normEra.includes('tang') || normEra.includes('ming') || normEra.includes('wuxia')) {
+    return [34.3416, 108.9398]; // Chang'an / Xi'an
+  }
+  if (normEra.includes('japan') || normEra.includes('samurai') || normEra.includes('edo') || normEra.includes('feudal')) {
+    return [35.0116, 135.7681]; // Kyoto
+  }
+  if (normEra.includes('west') || normEra.includes('frontier')) {
+    return [31.7142, -110.0652]; // Tombstone
+  }
+  if (normEra.includes('victor') || normEra.includes('gothic')) {
+    return [51.5074, -0.1278]; // Londra
+  }
+  if (normEra.includes('pirate') || normEra.includes('carib')) {
+    return [20.0573, -72.7936]; // Tortuga
+  }
+  if (normEra.includes('ancient') || normEra.includes('roma') || normEra.includes('myth')) {
+    return [41.9028, 12.4964]; // Roma
+  }
+  if (normEra.includes('cyber')) {
+    return [35.6762, 139.6503]; // Neo Tokyo
+  }
+
+  return [41.9028, 12.4964];
+}
+
+const TILE_LAYERS: Record<TileLayerStyle, { url: string; attribution: string; maxZoom: number; className?: string }> = {
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
+    className: 'leaflet-dark-tiles',
   },
   osm: {
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; OpenStreetMap contributors',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19,
+    className: '',
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    attribution: 'Tiles &copy; Esri &mdash; DigitalGlobe, GeoEye, Earthstar Geographics',
     maxZoom: 18,
+    className: '',
   },
 };
 
@@ -89,23 +158,39 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
   const activeTileLayerRef = useRef<L.TileLayer | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
-  // Gestione Distretti Dinamici
+  // Gestione Distretti Dinamici con correzione automatica se l'epoca salvata non corrisponde
   const [districts, setDistricts] = useState<CityDistrict[]>(() => {
+    let list: CityDistrict[] = [];
     if (campaign?.cityDistricts && campaign.cityDistricts.length > 0) {
-      return campaign.cityDistricts;
+      list = campaign.cityDistricts;
+    } else {
+      const saved = localStorage.getItem(`chronica_districts_${cityName}_${era}`);
+      if (saved) {
+        try {
+          list = JSON.parse(saved);
+        } catch {}
+      }
     }
-    const saved = localStorage.getItem(`chronica_districts_${cityName}_${era}`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {}
+    if (list.length === 0 || isDistrictsMismatchingEra(list, era)) {
+      list = generateThematicDistricts(era, cityName);
     }
-    return generateThematicDistricts(era, cityName);
+    return list;
   });
 
   const [activeDistrictId, setActiveDistrictId] = useState<string>(() => {
     return campaign?.activeDistrictId || districts[0]?.id || '';
   });
+
+  // Aggiorna e salva automaticamente se i distretti correnti erano un preset generico non allineato all'epoca
+  useEffect(() => {
+    if (isOpen && districts.length > 0 && isDistrictsMismatchingEra(districts, era)) {
+      const fresh = generateThematicDistricts(era, cityName);
+      setDistricts(fresh);
+      setActiveDistrictId(fresh[0].id);
+      onUpdateDistricts?.(fresh, fresh[0].id);
+      safeLocalStorageSet(`chronica_districts_${cityName}_${era}`, JSON.stringify(fresh));
+    }
+  }, [isOpen, era, cityName]);
 
   const campaignMaps = campaign?.maps || [];
   const [selectedMapId, setSelectedMapId] = useState<string | 'districts' | 'osm' | 'legacy_custom'>(() => {
@@ -121,8 +206,7 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
   const [tileStyle, setTileStyle] = useState<TileLayerStyle>('dark');
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [resolvedCoords, setResolvedCoords] = useState<[number, number]>(() => {
-    const key = cityName.toLowerCase().replace(/[^a-z]/g, '');
-    return KNOWN_CITY_COORDINATES[key] || [31.7142, -110.0652];
+    return resolveCityCoordinates(cityName, era);
   });
 
   const [customMapUrl, setCustomMapUrl] = useState<string | null>(
@@ -185,15 +269,20 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
   useEffect(() => {
     if (!isOpen || !cityName) return;
 
-    const normalizedKey = cityName.toLowerCase().replace(/[^a-z]/g, '');
-    if (KNOWN_CITY_COORDINATES[normalizedKey]) {
-      setResolvedCoords(KNOWN_CITY_COORDINATES[normalizedKey]);
-      return;
+    // Risoluzione locale istantanea
+    const localCoords = resolveCityCoordinates(cityName, era);
+    setResolvedCoords(localCoords);
+    if (leafletMapRef.current) {
+      leafletMapRef.current.setView(localCoords, 13);
     }
+
+    // Se il nome contiene suffissi d'epoca (es. "Chang'an, Cina (Dinastia Tang 750 d.C.)"), estrai la città base
+    const strippedName = cityName.replace(/\([^)]*\)/g, '').trim();
+    const primarySearch = strippedName.split(',')[0].trim() || strippedName;
 
     // Ricerca diretta di geocoding OpenStreetMap
     setIsGeocoding(true);
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1`, {
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(primarySearch)}&limit=1`, {
       headers: { 'User-Agent': 'ChronicaTTRPG/1.0' },
     })
       .then((res) => res.json())
@@ -213,7 +302,7 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
       .finally(() => {
         setIsGeocoding(false);
       });
-  }, [isOpen, cityName]);
+  }, [isOpen, cityName, era]);
 
   // Inizializzazione e gestione robusta di Leaflet
   useEffect(() => {
@@ -239,6 +328,7 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
       attribution: currentLayerConf.attribution,
       subdomains: 'abcd',
       maxZoom: currentLayerConf.maxZoom,
+      className: currentLayerConf.className,
     }).addTo(map);
     activeTileLayerRef.current = tileLayer;
 
@@ -333,6 +423,7 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
       attribution: conf.attribution,
       subdomains: 'abcd',
       maxZoom: conf.maxZoom,
+      className: conf.className,
     }).addTo(leafletMapRef.current);
     activeTileLayerRef.current = newLayer;
   }, [tileStyle, mapMode]);
@@ -478,6 +569,25 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
                   🛰️ Satellite
                 </button>
               </div>
+            )}
+
+            {/* Pulsante Rigenera Distretti per quest'Epoca */}
+            {mapMode === 'districts' && (
+              <button
+                type="button"
+                onClick={() => {
+                  const fresh = generateThematicDistricts(era, cityName);
+                  setDistricts(fresh);
+                  setActiveDistrictId(fresh[0].id);
+                  onUpdateDistricts?.(fresh, fresh[0].id);
+                  safeLocalStorageSet(`chronica_districts_${cityName}_${era}`, JSON.stringify(fresh));
+                }}
+                title="Rigenera la mappa a distretti calibrandola sull'epoca storica corrente"
+                className="hidden md:flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-amber-950/70 border border-amber-600/60 hover:bg-amber-900/80 text-amber-200 text-xs font-serif transition-colors cursor-pointer shadow-sm"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Aggiorna a {era.replace('_', ' ')}</span>
+              </button>
             )}
 
             {/* Switch Modalità: Distretti d'Epoca vs Mappe Immagine vs OSM */}
@@ -663,11 +773,28 @@ export const CityMapModal: React.FC<CityMapModalProps> = ({
                 cityName={cityName}
               />
             ) : selectedMapId === 'osm' ? (
-              <div
-                ref={mapContainerRef}
-                className="w-full h-full min-h-[400px] z-10"
-                style={{ background: '#090d16' }}
-              />
+              <div className="relative w-full h-full min-h-[400px]">
+                {era !== 'modern' && (
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2.5 rounded-xl bg-slate-950/90 border border-amber-500/70 shadow-2xl backdrop-blur-md flex items-center space-x-3 text-xs max-w-xl text-left pointer-events-auto">
+                    <Compass className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
+                    <span className="text-slate-300">
+                      Stai visualizzando la mappa satellitare/stradale del mondo contemporaneo. Per esplorare la pianta d'epoca con i quartieri storici, usa i <strong>Distretti d'Epoca</strong>.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setMapMode('districts')}
+                      className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-black font-serif font-bold text-xs shrink-0 cursor-pointer shadow-md transition-all"
+                    >
+                      Vai ai Distretti
+                    </button>
+                  </div>
+                )}
+                <div
+                  ref={mapContainerRef}
+                  className="w-full h-full min-h-[400px] z-10"
+                  style={{ background: '#090d16' }}
+                />
+              </div>
             ) : currentImageUrl ? (
               <div
                 onClick={handleCustomMapClick}

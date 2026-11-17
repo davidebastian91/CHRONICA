@@ -43,3 +43,8 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #881337;
 }
+
+/* Leaflet Dark Noir Mode Tiles (Zero API Key, High Contrast Dark Palette) */
+.leaflet-dark-tiles .leaflet-tile {
+  filter: brightness(0.65) invert(1) contrast(2.5) hue-rotate(200deg) saturate(0.35) brightness(0.75);
+}

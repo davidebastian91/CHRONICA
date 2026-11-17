@@ -52,6 +52,14 @@ export const ThematicDistrictMapView: React.FC<ThematicDistrictMapViewProps> = (
 
   const isCyber = era.toLowerCase().includes('cyber') || era.toLowerCase().includes('sci-fi');
   const isWest = era.toLowerCase().includes('west') || era.toLowerCase().includes('frontier');
+  const isOrient =
+    era.toLowerCase().includes('china') ||
+    era.toLowerCase().includes('tang') ||
+    era.toLowerCase().includes('ming') ||
+    era.toLowerCase().includes('japan') ||
+    era.toLowerCase().includes('wuxia') ||
+    era.toLowerCase().includes('samurai') ||
+    era.toLowerCase().includes('feudal');
 
   const selectedDistrict = districts.find((d) => d.id === selectedDistrictId) || districts[0];
   const partyDistrict = districts.find((d) => d.id === activeDistrictId) || districts[0];
@@ -110,6 +118,8 @@ export const ThematicDistrictMapView: React.FC<ThematicDistrictMapViewProps> = (
         ? 'bg-slate-950 text-slate-100 font-sans'
         : isWest
         ? 'bg-[#1a140f] text-amber-100 font-serif'
+        : isOrient
+        ? 'bg-[#140e11] text-amber-100 font-serif'
         : 'bg-[#181512] text-amber-100 font-serif'
     }`}>
       {/* AREA MAPPA VETTORIALE A SCHERMO */}
@@ -119,6 +129,8 @@ export const ThematicDistrictMapView: React.FC<ThematicDistrictMapViewProps> = (
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${
             isCyber
               ? 'bg-[radial-gradient(#06b6d4_1px,transparent_1px)] [background-size:24px_24px] opacity-15'
+              : isOrient
+              ? 'bg-[radial-gradient(#eab308_1px,transparent_1px)] [background-size:26px_26px] opacity-12'
               : 'bg-[radial-gradient(#d97706_1px,transparent_1px)] [background-size:28px_28px] opacity-10'
           }`}
         />
