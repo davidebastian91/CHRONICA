@@ -841,7 +841,7 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
   };
 
   return (
-    <div className="max-w-4xl mx-auto w-full bg-slate-900/90 border border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl shadow-indigo-950/40 overflow-hidden backdrop-blur-md my-2 sm:my-4">
+    <div className="max-w-4xl lg:max-w-5xl xl:max-w-7xl 2xl:max-w-[94vw] mx-auto w-full bg-slate-900/90 border border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl shadow-indigo-950/40 overflow-hidden backdrop-blur-md my-2 sm:my-4 transition-all duration-200">
       {/* Banner Titolo & Tabs */}
       <div className="bg-gradient-to-r from-slate-950 via-indigo-950/80 to-slate-950 p-4 sm:p-8 border-b border-slate-800 text-center relative">
         <div className="inline-flex items-center space-x-2 text-indigo-400 mb-1.5 sm:mb-2">
@@ -2179,7 +2179,7 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                   <p className="text-xs text-slate-400 font-sans">
                     Seleziona i tratti speciali o manovre del personaggio. Includono capacità come <strong>Estrazione Rapida</strong> per non perdere un turno a sfoderare l'arma o <strong>Riflessi Fulminei</strong> (+2 iniziativa).
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
                     {WOD_MERITS_AND_FLAWS.map((mf) => {
                       const isChecked = selectedMeritIds.includes(mf.id);
                       return (
@@ -2191,9 +2191,9 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                               prev.includes(mf.id) ? prev.filter((id) => id !== mf.id) : [...prev, mf.id]
                             );
                           }}
-                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-start space-x-2.5 ${
+                          className={`p-2.5 sm:p-3 rounded-xl border text-left transition-all cursor-pointer flex items-start space-x-2.5 ${
                             isChecked
-                              ? 'bg-amber-950/40 border-amber-500/80 text-white'
+                              ? 'bg-amber-950/40 border-amber-500/80 text-white shadow-sm'
                               : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
                           }`}
                         >
@@ -2207,12 +2207,12 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <span className="font-serif font-bold text-xs text-amber-300 truncate">
+                            <div className="flex items-start justify-between gap-1.5">
+                              <span className="font-serif font-bold text-xs text-amber-300 leading-tight break-words">
                                 {mf.name}
                               </span>
                               <span
-                                className={`text-[10px] font-mono uppercase px-1 rounded ${
+                                className={`text-[10px] font-mono uppercase px-1 rounded shrink-0 whitespace-nowrap ${
                                   mf.type === 'merit'
                                     ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
                                     : 'bg-red-950 text-red-300 border border-red-800/60'
@@ -2221,7 +2221,7 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                                 {mf.cost > 0 ? `+${mf.cost}` : mf.cost} pt
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">{mf.description}</p>
+                            <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 break-words">{mf.description}</p>
                           </div>
                         </button>
                       );
@@ -2230,10 +2230,10 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                 </div>
 
                 {/* SEZIONE EQUIPAGGIAMENTO INIZIALE UFFICIALE (SCHERMO DEL NARRATORE) */}
-                <div className="bg-slate-950/90 border border-emerald-800/70 rounded-2xl p-4 sm:p-5 space-y-4 shadow-lg">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                    <div className="flex items-center space-x-2">
-                      <Package className="w-5 h-5 text-emerald-400" />
+                <div className="bg-slate-950/90 border border-emerald-800/70 rounded-2xl p-4 sm:p-5 lg:p-6 space-y-4 shadow-lg">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                    <div className="flex items-center space-x-2.5">
+                      <Package className="w-5 h-5 text-emerald-400 shrink-0" />
                       <div>
                         <span className="text-xs sm:text-sm font-mono font-bold uppercase text-emerald-300 block">
                           Arsenale & Equipaggiamento Ufficiale (Schermo del Narratore)
@@ -2243,11 +2243,11 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setFilterGearByEra((prev) => !prev)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-mono border transition-all cursor-pointer ${
                           filterGearByEra
                             ? 'bg-indigo-950 border-indigo-500 text-indigo-200 font-bold'
                             : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200'
@@ -2255,14 +2255,14 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                       >
                         {filterGearByEra ? `Filtro Epoca Attivo (${era})` : 'Catalogo Completo (Tutte le Epoche)'}
                       </button>
-                      <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-950/80 border border-emerald-700 text-emerald-300">
+                      <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-700 text-emerald-300 whitespace-nowrap">
                         {selectedGearIds.length} Selezionati
                       </span>
                     </div>
                   </div>
 
                   {/* Tab Categorie dello Schermo del Narratore */}
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {[
                       { id: 'all', label: '📋 Tutte le Tabelle', count: getStartingGearForEra(era, filterGearByEra).length },
                       {
@@ -2295,14 +2295,14 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                         key={cat.id}
                         type="button"
                         onClick={() => setGearTab(cat.id as any)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer flex items-center space-x-1.5 ${
+                        className={`px-3.5 py-2 rounded-xl text-xs font-mono transition-all cursor-pointer flex items-center space-x-2 ${
                           gearTab === cat.id
                             ? 'bg-emerald-700 text-white font-bold shadow-md shadow-emerald-950/60'
                             : 'bg-slate-900/90 border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                         }`}
                       >
                         <span>{cat.label}</span>
-                        <span className="text-[10px] opacity-80">({cat.count})</span>
+                        <span className="text-[10px] opacity-80 font-bold">({cat.count})</span>
                       </button>
                     ))}
                   </div>
@@ -2312,32 +2312,32 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                     const activeArmor = getCharacterArmorStatsFromGear(selectedGearIds);
                     const selectedItems = ALL_STORYTELLER_GEAR_OPTIONS.filter((g) => selectedGearIds.includes(g.id));
                     return (
-                      <div className="bg-slate-900/90 border border-emerald-900/60 rounded-xl p-3 space-y-2">
+                      <div className="bg-slate-900/90 border border-emerald-900/60 rounded-xl p-3.5 space-y-2.5">
                         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                          <span className="font-mono uppercase text-emerald-400 font-bold">
-                            Dotazione Attuale del Personaggio:
+                          <span className="font-mono uppercase text-emerald-400 font-bold tracking-wide">
+                            Dotazione Attuale del Personaggio ({selectedItems.length + customGearItems.length}):
                           </span>
                           {activeArmor.armorName && (
-                            <span className="font-mono text-[11px] bg-indigo-950 border border-indigo-700/80 text-indigo-200 px-2 py-0.5 rounded-lg">
-                              🛡️ Armatura Attiva: <strong>{activeArmor.armorValue}/{activeArmor.armorFirearmValue}</strong>
+                            <span className="font-mono text-xs bg-indigo-950 border border-indigo-700/80 text-indigo-200 px-3 py-1 rounded-lg">
+                              🛡️ Armatura Attiva: <strong className="text-white">{activeArmor.armorName}</strong> (Valore: <strong>{activeArmor.armorValue}/{activeArmor.armorFirearmValue}</strong>
                               {activeArmor.defensePenalty !== 0 ? ` | Difesa ${activeArmor.defensePenalty}` : ''}
-                              {activeArmor.speedPenalty !== 0 ? ` | Velocità ${activeArmor.speedPenalty}` : ''}
+                              {activeArmor.speedPenalty !== 0 ? ` | Velocità ${activeArmor.speedPenalty}` : ''})
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-2">
                           {selectedItems.map((item) => (
                             <span
                               key={item.id}
                               onClick={() => setSelectedGearIds((prev) => prev.filter((id) => id !== item.id))}
                               title="Clicca per rimuovere"
-                              className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/70 border border-emerald-600/60 text-xs text-emerald-200 cursor-pointer hover:bg-red-950/60 hover:border-red-500/60 hover:text-red-200 transition-colors"
+                              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-600/60 text-xs text-emerald-200 cursor-pointer hover:bg-red-950/60 hover:border-red-500/60 hover:text-red-200 transition-colors shadow-sm"
                             >
-                              <span>{item.name}</span>
+                              <span className="font-semibold">{item.name}</span>
                               {item.damageOrEffect && (
                                 <span className="text-[10px] font-mono text-amber-300">[{item.damageOrEffect}]</span>
                               )}
-                              <span className="text-[10px] opacity-75">✕</span>
+                              <span className="text-[10px] opacity-75 font-bold">✕</span>
                             </span>
                           ))}
 
@@ -2356,7 +2356,7 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                                   setCustomGearItems((prev) => prev.filter((_, i) => i !== idx))
                                 }
                                 title="Oggetto specialistico unico estratto dal Cast. Clicca per rimuovere."
-                                className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-indigo-950/80 border border-indigo-600/70 text-xs text-indigo-200 cursor-pointer hover:bg-red-950/60 hover:border-red-500/60 hover:text-red-200 transition-colors"
+                                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-indigo-950/80 border border-indigo-600/70 text-xs text-indigo-200 cursor-pointer hover:bg-red-950/60 hover:border-red-500/60 hover:text-red-200 transition-colors shadow-sm"
                               >
                                 <span className="font-semibold">{item.name}</span>
                                 {item.damage !== undefined && (
@@ -2366,7 +2366,7 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                                   <span className="text-[10px] font-mono text-cyan-300">[Armatura +{item.armorBonus}]</span>
                                 )}
                                 <span className="text-[9px] font-mono uppercase bg-indigo-900/60 text-indigo-300 px-1 py-0.5 rounded">Special</span>
-                                <span className="text-[10px] opacity-75">✕</span>
+                                <span className="text-[10px] opacity-75 font-bold">✕</span>
                               </span>
                             ))}
                         </div>
@@ -2375,7 +2375,7 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                   })()}
 
                   {/* Griglia Articoli delle Tabelle Ufficiali */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-96 overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[580px] overflow-y-auto pr-2 custom-scrollbar">
                     {getStartingGearForEra(era, filterGearByEra)
                       .filter((g) => gearTab === 'all' || g.screenCategory === gearTab)
                       .map((gear) => {
@@ -2390,10 +2390,10 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                                 prev.includes(gear.id) ? prev.filter((id) => id !== gear.id) : [...prev, gear.id]
                               );
                             }}
-                            className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-start space-x-2.5 ${
+                            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-start space-x-3 hover:shadow-lg ${
                               isChecked
-                                ? 'bg-emerald-950/50 border-emerald-500 text-white shadow-md shadow-emerald-950/50'
-                                : 'bg-slate-900/70 border-slate-800 text-slate-300 hover:border-slate-700'
+                                ? 'bg-emerald-950/60 border-emerald-500 text-white shadow-md shadow-emerald-950/50 ring-1 ring-emerald-500/50'
+                                : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-900'
                             }`}
                           >
                             <div
@@ -2405,14 +2405,14 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                             >
                               {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                             </div>
-                            <div className="flex-1 min-w-0 space-y-1">
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="font-serif font-bold text-xs sm:text-sm text-emerald-300 truncate">
+                            <div className="flex-1 min-w-0 space-y-1.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="font-serif font-bold text-xs sm:text-sm text-emerald-300 leading-snug break-words">
                                   {gear.name}
                                 </span>
                                 {gear.costDots && (
                                   <span
-                                    className="text-[10px] font-mono bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-amber-300 shrink-0"
+                                    className="text-[10px] font-mono bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-amber-300 shrink-0 whitespace-nowrap"
                                     title="Costo minimo nel Pregio Risorse"
                                   >
                                     Costo: {gear.costDots}
@@ -2447,12 +2447,12 @@ export const CampaignWizard: React.FC<CampaignWizardProps> = ({ onStartCampaign,
                               </div>
 
                               {gear.specialRules && (
-                                <div className="text-[10px] font-mono text-indigo-300 bg-indigo-950/40 border border-indigo-900/50 px-1.5 py-0.5 rounded">
+                                <div className="text-[10px] font-mono text-indigo-300 bg-indigo-950/40 border border-indigo-900/50 px-1.5 py-0.5 rounded break-words">
                                   ★ Speciale: {gear.specialRules}
                                 </div>
                               )}
 
-                              <p className="text-[11px] text-slate-400 leading-snug">{gear.description}</p>
+                              <p className="text-[11px] text-slate-300 leading-snug break-words">{gear.description}</p>
                             </div>
                           </button>
                         );

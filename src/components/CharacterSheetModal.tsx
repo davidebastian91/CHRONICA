@@ -273,7 +273,7 @@ export const CharacterSheetModal: React.FC<CharacterSheetModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="w-full max-w-5xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-indigo-950/50 overflow-hidden flex flex-col my-auto max-h-[92vh]">
+      <div className="w-full max-w-5xl xl:max-w-7xl 2xl:max-w-[94vw] bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl shadow-indigo-950/50 overflow-hidden flex flex-col my-auto max-h-[92vh] transition-all duration-200">
         {/* Header Scheda */}
         <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 px-5 sm:px-6 py-4 border-b border-slate-800 flex items-center justify-between shrink-0">
           <div>

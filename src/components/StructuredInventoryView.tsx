@@ -168,9 +168,9 @@ export const StructuredInventoryView: React.FC<StructuredInventoryViewProps> = (
       </div>
 
       {/* Lista Oggetti */}
-      <div className={compact ? 'space-y-2' : 'space-y-2.5'}>
+      <div className={compact ? 'space-y-2' : 'grid grid-cols-1 lg:grid-cols-2 gap-2.5'}>
         {filteredItems.length === 0 ? (
-          <div className="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-6 text-center text-slate-500 font-serif italic text-xs sm:text-sm">
+          <div className="bg-slate-950/40 border border-slate-800/80 rounded-2xl p-6 text-center text-slate-500 font-serif italic text-xs sm:text-sm col-span-full">
             Nessun oggetto in questa categoria.
           </div>
         ) : (
