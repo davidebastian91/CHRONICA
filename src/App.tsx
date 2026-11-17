@@ -14,7 +14,7 @@ import type {
 } from './types';
 import { createDefaultCharacter } from './utils/characterTemplates';
 import { awardExperience } from './utils/experienceRules';
-import { addLootToInventory, consumeAmmo, checkHealingItemStatus, consumeHealingItem } from './utils/inventorySystem';
+import { addLootToInventory, consumeAmmo, checkHealingItemStatus, consumeHealingItem, consumeNamedItem } from './utils/inventorySystem';
 import { generateNarratorResponse, generateGrandPrologue, askNarratorClarification } from './services/ai';
 import { multiplayer, type RoomPlayer } from './services/multiplayer';
 import { getAttributeValue, getAbilityValue, parseSuggestionRoll } from './utils/traitLabels';
@@ -989,7 +989,15 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
           // Aggiornamento automatico della Salute del giocatore su Cure ricevute dal Narratore
           if (response.playerHeal && activeChar) {
             const healedHealth = healDamageFromHealth(activeChar.health, response.playerHeal.points, response.playerHeal.type || 'bashing');
-            const healedChar = { ...activeChar, health: healedHealth };
+            let healedChar = { ...activeChar, health: healedHealth };
+            if (/kit\s*medico|benda|pozion|medikit|pronto\s*soccorso/i.test(response.playerHeal.reason || '')) {
+              const res = consumeNamedItem(healedChar, 'kit medico');
+              if (res.success) healedChar = res.updatedChar;
+              else {
+                const bRes = consumeNamedItem(healedChar, 'benda');
+                if (bRes.success) healedChar = bRes.updatedChar;
+              }
+            }
             activeChar = healedChar;
             if (actingPlayer) {
               actingPlayer.character = healedChar;
@@ -1265,7 +1273,15 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       // Aggiornamento automatico della Salute del protagonista su Cure ricevute dal Narratore
       if (response.playerHeal && character) {
         const healedHealth = healDamageFromHealth(character.health, response.playerHeal.points, response.playerHeal.type || 'bashing');
-        const healedChar = { ...character, health: healedHealth };
+        let healedChar = { ...character, health: healedHealth };
+        if (/kit\s*medico|benda|pozion|medikit|pronto\s*soccorso/i.test(response.playerHeal.reason || '')) {
+          const res = consumeNamedItem(healedChar, 'kit medico');
+          if (res.success) healedChar = res.updatedChar;
+          else {
+            const bRes = consumeNamedItem(healedChar, 'benda');
+            if (bRes.success) healedChar = bRes.updatedChar;
+          }
+        }
         setCharacter(healedChar);
         localStorage.setItem('chronica_character', JSON.stringify(healedChar));
         multiplayer.updateCharacter(healedChar);
@@ -1418,7 +1434,15 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       // Aggiornamento automatico della Salute del giocatore su Cure narrative
       if (response.playerHeal && targetChar) {
         const healedHealth = healDamageFromHealth(targetChar.health, response.playerHeal.points, response.playerHeal.type || 'bashing');
-        const healedChar = { ...targetChar, health: healedHealth };
+        let healedChar = { ...targetChar, health: healedHealth };
+        if (/kit\s*medico|benda|pozion|medikit|pronto\s*soccorso/i.test(response.playerHeal.reason || '')) {
+          const res = consumeNamedItem(healedChar, 'kit medico');
+          if (res.success) healedChar = res.updatedChar;
+          else {
+            const bRes = consumeNamedItem(healedChar, 'benda');
+            if (bRes.success) healedChar = bRes.updatedChar;
+          }
+        }
         if (isMobileTarget && targetPlayerId) {
           setConnectedPlayers((prev) =>
             prev.map((p) => (p.id === targetPlayerId ? { ...p, character: healedChar } : p))
@@ -1454,7 +1478,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
     const rollingPlayer = isMobileSource
       ? connectedPlayersRef.current.find((p) => p.id === sourcePlayerId)
       : undefined;
-    const activeChar = rollingPlayer?.character || character || null;
+    let activeChar = rollingPlayer?.character || character || null;
     const senderDisplayName = sourcePlayerName || rollingPlayer?.name || character?.name || 'Tavolo';
 
     // Se il giocatore ha tirato l'Iniziativa, aggiorna la sua voce e controlla se tutti hanno tirato
@@ -1593,6 +1617,26 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       }
     }
 
+    // Se l'azione riguarda l'uso di kit medico, bende o pozioni, consuma 1 oggetto
+    if (/kit\s*medico|medikit|pronto\s*soccorso|bende|benda|pozion/i.test(actionText)) {
+      if (activeChar) {
+        const healRes = consumeHealingItem(activeChar);
+        if (healRes.success) {
+          activeChar = healRes.updatedChar;
+          if (isMobileSource && sourcePlayerId) {
+            setConnectedPlayers((prev) =>
+              prev.map((p) => (p.id === sourcePlayerId ? { ...p, character: healRes.updatedChar } : p))
+            );
+          } else if (character) {
+            setCharacter(healRes.updatedChar);
+            localStorage.setItem('chronica_character', JSON.stringify(healRes.updatedChar));
+          }
+          multiplayer.updateCharacter(healRes.updatedChar);
+          aiMechanicalContext += `\n[SISTEMA INVENTARIO: 1x ${healRes.consumedItem?.name || 'Kit Medico'} consumato! Rimasti: ${healRes.remaining}]`;
+        }
+      }
+    }
+
     const rollMsg: StoryMessage = {
       id: `msg_roll_${Date.now()}`,
       sender: 'player',
@@ -1673,7 +1717,15 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       // Aggiornamento automatico della Salute del giocatore su Cure narrative
       if (response.playerHeal && activeChar) {
         const healedHealth = healDamageFromHealth(activeChar.health, response.playerHeal.points, response.playerHeal.type || 'bashing');
-        const healedChar = { ...activeChar, health: healedHealth };
+        let healedChar = { ...activeChar, health: healedHealth };
+        if (/kit\s*medico|benda|pozion|medikit|pronto\s*soccorso/i.test(response.playerHeal.reason || '')) {
+          const res = consumeNamedItem(healedChar, 'kit medico');
+          if (res.success) healedChar = res.updatedChar;
+          else {
+            const bRes = consumeNamedItem(healedChar, 'benda');
+            if (bRes.success) healedChar = bRes.updatedChar;
+          }
+        }
         if (isMobileSource && sourcePlayerId) {
           setConnectedPlayers((prev) =>
             prev.map((p) => (p.id === sourcePlayerId ? { ...p, character: healedChar } : p))

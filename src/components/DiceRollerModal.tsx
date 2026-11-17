@@ -437,7 +437,7 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
 
   const canSpendWillpower = (character?.willpower?.current || 0) > 0;
 
-  const ammoStatus = character ? checkAmmoStatus(character) : null;
+  const ammoStatus = character ? checkAmmoStatus(character, currentWeapon?.name) : null;
   const isOutOfAmmo = Boolean(
     isRangedAction && ammoStatus && ammoStatus.ammoItems.length > 0 && ammoStatus.totalAmmo === 0
   );
@@ -585,7 +585,9 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
       let ammoDetails = '';
       if (isRangedAction && currentChar && onUpdateCharacter) {
         const ammoAmount = fireMode === 'fullAuto' ? 'all' : fireMode === 'shortBurst' ? 3 : 1;
-        const ammoRes = consumeAmmo(currentChar, ammoAmount);
+        const weaponName = lastRoll?.weaponName || currentWeapon?.name;
+        const weaponClip = currentWeapon?.clipSize;
+        const ammoRes = consumeAmmo(currentChar, ammoAmount, weaponName, weaponClip);
         if (ammoRes.success) {
           currentChar = ammoRes.updatedChar;
           onUpdateCharacter(currentChar);

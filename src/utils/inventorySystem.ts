@@ -121,9 +121,44 @@ export function updateCharacterInventory(char: Character, items: InventoryItem[]
 }
 
 /**
+ * Trova l'indice della munizione compatibile con l'arma utilizzata.
+ */
+export function findMatchingAmmoItem(items: InventoryItem[], weaponNameOrCategory?: string): number {
+  const weapon = (weaponNameOrCategory || '').toLowerCase();
+
+  // 1. Corrispondenza per Archi e Balestre
+  if (weapon.includes('arco') || weapon.includes('balestra') || weapon.includes('bow') || weapon.includes('crossbow')) {
+    const arrowIdx = items.findIndex(
+      (i) => i.category === 'ammo' && i.quantity > 0 && (/frecci|dardo|faretra/i.test(i.name))
+    );
+    if (arrowIdx !== -1) return arrowIdx;
+  }
+
+  // 2. Corrispondenza per Armi da Fuoco (Revolver, Pistole, Fucili, Moschetti, Tromboni)
+  if (
+    weapon.includes('revolver') ||
+    weapon.includes('pistola') ||
+    weapon.includes('colt') ||
+    weapon.includes('fucile') ||
+    weapon.includes('moschetto') ||
+    weapon.includes('trombone') ||
+    weapon.includes('canne') ||
+    weapon.includes('firearms')
+  ) {
+    const bulletIdx = items.findIndex(
+      (i) => i.category === 'ammo' && i.quantity > 0 && (/proiettil|munizion|cartucc|pallottole|colp/i.test(i.name))
+    );
+    if (bulletIdx !== -1) return bulletIdx;
+  }
+
+  // 3. Fallback: prima munizione disponibile
+  return items.findIndex((i) => i.category === 'ammo' && i.quantity > 0);
+}
+
+/**
  * Verifica se il personaggio ha munizioni disponibili per attacchi a distanza (armi da fuoco, arco, ecc.).
  */
-export function checkAmmoStatus(char: Character): {
+export function checkAmmoStatus(char: Character, weaponNameOrCategory?: string): {
   hasAmmo: boolean;
   totalAmmo: number;
   ammoItems: InventoryItem[];
@@ -131,8 +166,9 @@ export function checkAmmoStatus(char: Character): {
 } {
   const items = getCharacterInventory(char);
   const ammoItems = items.filter((i) => i.category === 'ammo');
-  const totalAmmo = ammoItems.reduce((sum, item) => sum + Math.max(0, item.quantity), 0);
-  const primaryAmmo = ammoItems.find((i) => i.quantity > 0) || ammoItems[0];
+  const matchedIdx = findMatchingAmmoItem(items, weaponNameOrCategory);
+  const primaryAmmo = matchedIdx !== -1 ? items[matchedIdx] : (ammoItems.find((i) => i.quantity > 0) || ammoItems[0]);
+  const totalAmmo = primaryAmmo ? primaryAmmo.quantity : 0;
 
   return {
     hasAmmo: totalAmmo > 0,
@@ -143,11 +179,13 @@ export function checkAmmoStatus(char: Character): {
 }
 
 /**
- * Consuma munizioni dall'inventario (1 colpo, raffica, o svuota l'intero caricatore).
+ * Consuma munizioni dall'inventario per l'arma specifica utilizzata.
  */
 export function consumeAmmo(
   char: Character,
-  amount: number | 'all' = 1
+  amount: number | 'all' = 1,
+  weaponName?: string,
+  clipSize?: number
 ): {
   updatedChar: Character;
   success: boolean;
@@ -157,7 +195,7 @@ export function consumeAmmo(
   message: string;
 } {
   const items = [...getCharacterInventory(char)];
-  const ammoIndex = items.findIndex((i) => i.category === 'ammo' && i.quantity > 0);
+  const ammoIndex = findMatchingAmmoItem(items, weaponName);
 
   if (ammoIndex === -1) {
     return {
@@ -165,12 +203,16 @@ export function consumeAmmo(
       success: false,
       remaining: 0,
       consumedCount: 0,
-      message: 'Munizioni esaurite! Nessun proiettile o freccia rimasta nella faretra / caricatore.',
+      message: `Munizioni esaurite per quest'arma! Nessun colpo compatibile rimasto.`,
     };
   }
 
   const target = { ...items[ammoIndex] };
-  const toConsume = amount === 'all' ? target.quantity : Math.min(target.quantity, Math.max(1, amount));
+  // Svuota caricatore consuma al massimo la capienza del caricatore (default 6 per revolver, o clipSize), o i colpi rimasti
+  const maxClip = clipSize && clipSize > 0 ? clipSize : 6;
+  const toConsume = amount === 'all'
+    ? Math.min(target.quantity, maxClip)
+    : Math.min(target.quantity, Math.max(1, amount));
 
   target.quantity = Math.max(0, target.quantity - toConsume);
   items[ammoIndex] = target;
@@ -185,8 +227,55 @@ export function consumeAmmo(
     remaining,
     consumedCount: toConsume,
     message: remaining === 0
-      ? `Hai sparato tutti i colpi rimasti (${toConsume}) di ${target.name}! Munizioni ora completamente ESAURITE (0).`
-      : `Hai sparato ${toConsume} colpi di ${target.name}. Rimasti: ${remaining}.`,
+      ? `Hai sparato gli ultimi colpi (${toConsume}) di ${target.name}! Munizioni ora completamente ESAURITE (0).`
+      : `Hai consumato ${toConsume} colpi di ${target.name}. Rimasti: ${remaining}.`,
+  };
+}
+
+/**
+ * Consuma un oggetto specifico per nome o motivo (es. "Kit Medico", "Bende", "Pozione", "Torcia").
+ */
+export function consumeNamedItem(
+  char: Character,
+  itemNameOrPattern: string,
+  quantityToConsume: number = 1
+): {
+  updatedChar: Character;
+  success: boolean;
+  consumedItem?: InventoryItem;
+  remaining: number;
+  message: string;
+} {
+  const items = [...getCharacterInventory(char)];
+  const pat = itemNameOrPattern.toLowerCase().trim();
+  const idx = items.findIndex((i) => i.name.toLowerCase().includes(pat) && i.quantity > 0);
+
+  if (idx === -1) {
+    return {
+      updatedChar: char,
+      success: false,
+      remaining: 0,
+      message: `Oggetto "${itemNameOrPattern}" non trovato o terminato nell'inventario.`,
+    };
+  }
+
+  const item = { ...items[idx] };
+  const toRemove = Math.min(item.quantity, Math.max(1, quantityToConsume));
+  item.quantity -= toRemove;
+
+  if (item.quantity <= 0) {
+    items.splice(idx, 1);
+  } else {
+    items[idx] = item;
+  }
+
+  const updatedChar = updateCharacterInventory(char, items);
+  return {
+    updatedChar,
+    success: true,
+    consumedItem: item,
+    remaining: Math.max(0, item.quantity),
+    message: `Consumato ${toRemove}x ${item.name}. Rimasti: ${Math.max(0, item.quantity)}.`,
   };
 }
 
