@@ -1,19 +1,4 @@
-$lanUrl = "http://192.168.1.200:5173"
-$cloudUrl = "https://ottawa-distributors-hampshire-away.trycloudflare.com"
-
-$targetUrl = $cloudUrl
-try {
-    $req = [System.Net.WebRequest]::Create("$lanUrl/api/server-info")
-    $req.Timeout = 700
-    $resp = $req.GetResponse()
-    $status = [int]$resp.StatusCode
-    $resp.Close()
-    if ($status -eq 200) {
-        $targetUrl = $lanUrl
-    }
-} catch {
-    $targetUrl = $cloudUrl
-}
+$targetUrl = "https://chronica.onrender.com"
 
 # Avvia Microsoft Edge o Chrome in modalità App (finestra nativa pulita, senza barra URL)
 $edgePath = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
@@ -26,4 +11,3 @@ if (Test-Path $edgePath) {
 } else {
     Start-Process $targetUrl
 }
-

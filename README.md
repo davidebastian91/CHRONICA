@@ -1,32 +1,37 @@
-# React + TypeScript + Vite
+# 🌑 CHRONICA — D10 Engine & Virtual Tabletop
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Piattaforma e motore di gioco di ruolo digitale basato sul **Chronica D10 Engine**, con IA Narratore (Gemini) e voce neurale HD.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🌐 Architettura di Produzione & Cloud (Online 24/7)
 
-## React Compiler
+Il sistema è completamente autonomo e slegato da server casalinghi:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Web Hosting & API (Node.js)**:
+   * **Piattaforma:** [Render](https://render.com)
+   * **URL di Gioco:** `https://chronica.onrender.com`
+   * **Distribuzione Continua:** Ogni `git push origin main` attiva automaticamente il build e il deploy su Render.
 
-## Expanding the Oxlint configuration
+2. **Database Cloud Persistente**:
+   * **Piattaforma:** [Supabase](https://supabase.com) (PostgreSQL gestito su AWS EU-West)
+   * **Tabelle:** `chronica_profiles` (profili e PIN) e `chronica_saves` (cronache e schede personaggi).
+   * I dati e i salvataggi sono al sicuro in cloud indipendentemente da riavvii o aggiornamenti del server Render.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+3. **Intelligenza Artificiale**:
+   * **Modello:** Google Gemini Flash (tramite API Key centralizzata)
+   * **Sintesi Vocale:** Microsoft Neural TTS (Edge HD, voce Diego/Elsa)
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+---
+
+## 💻 Sviluppo Locale & Avvio
+
+### Per avviare in locale:
+```bash
+npm install
+npm run dev   # Solo interfaccia Vite
+npm start     # Server completo Node + WebSockets su http://localhost:5173
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Launcher Desktop:
+Su Windows, fare doppio clic su `Chronica.bat` (o il collegamento sul desktop) per aprire l'applicazione a schermo pulito tramite Edge/Chrome collegato a `https://chronica.onrender.com`.
