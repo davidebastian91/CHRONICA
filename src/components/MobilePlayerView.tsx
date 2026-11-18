@@ -2289,7 +2289,11 @@ export const MobilePlayerView: React.FC<MobilePlayerViewProps> = ({ roomCode, on
       <QuickGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
 
       {/* MODAL SCHERMO DEL NARRATORE */}
-      <StorytellerScreenModal isOpen={isStorytellerScreenOpen} onClose={() => setIsStorytellerScreenOpen(false)} />
+      <StorytellerScreenModal
+        isOpen={isStorytellerScreenOpen}
+        onClose={() => setIsStorytellerScreenOpen(false)}
+        character={character}
+      />
 
       {/* MODAL CHIEDI AL NARRATORE (SMARTPHONE) */}
       <AskNarratorModal

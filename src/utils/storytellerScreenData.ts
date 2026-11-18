@@ -59,13 +59,18 @@ export const SCREEN_MELEE_WEAPONS: MeleeWeaponRow[] = [
   { type: 'Accetta', damage: '2 (L)', size: '1', cost: '•', special: '—' },
   { type: 'Ascia Grande†', damage: '5 (L)', size: '4', cost: '•••', special: 'Due mani; Ritira 9 (pag. 134)' },
   { type: 'Ascia†', damage: '3 (L)', size: '3', cost: '••', special: 'Due mani; Ritira 9 (pag. 134)' },
-  { type: 'Coltello', damage: '1 (L)', size: '1', cost: '•', special: 'Nascondibile in una mano' },
+  { type: 'Maglio da Guerra†', damage: '4 (L)', size: '3', cost: '•••', special: 'Due mani; Forza min. 3; Spacca armature e costrutti' },
+  { type: 'Mannaia Pesante', damage: '3 (L)', size: '2', cost: '••', special: 'Spaccaossa (-1 Difesa avversaria)' },
+  { type: 'Coltello / Daga', damage: '1 (L)', size: '1', cost: '•', special: 'Nascondibile in una mano' },
   { type: 'Katana', damage: '3 (L)', size: '2', cost: '••', special: 'Durezza +1** (non si rompe facilmente)' },
   { type: 'Lancia†', damage: '3 (L)', size: '4', cost: '•', special: 'Due mani; +1 Difesa contro avversari disarmati****' },
   { type: 'Paletto***', damage: '1 (L)', size: '1', cost: 'n/a', special: 'Mirare al cuore (-4), min. 3 danni in un singolo attacco' },
   { type: 'Spada', damage: '3 (L)', size: '2', cost: '••', special: 'Nascondibile sotto un cappotto' },
   { type: 'Spadone†', damage: '4 (L)', size: '3', cost: '•••', special: 'Due mani (+1 Forza min. se impugnato a una mano)' },
-  { type: 'Stocco', damage: '2 (L)', size: '2', cost: '••', special: 'Perforare Armatura 1 (pag. 167)' },
+  { type: 'Stocco / Fioretto', damage: '2 (L)', size: '2', cost: '••', special: 'Perforare Armatura 1 (pag. 167)' },
+  { type: 'Spada-Pistola (Gunblade)', damage: '3 (L) / 3 (L)', size: '2', cost: '••••', special: 'Ibrida: attacco di mischia + sparo ravvicinato' },
+  { type: 'Lame Gemelle in Carbonio', damage: '3 (L)', size: '1', cost: '••••', special: 'Coppia gemella: ideale per Ambidestro' },
+  { type: 'Scudo Tattico / Scudo in Acciaio', damage: '1 (C)', size: '2', cost: '••', special: '+2 Difesa attiva quando impugnato' },
 ];
 
 export const SCREEN_MELEE_NOTES = [
@@ -76,16 +81,21 @@ export const SCREEN_MELEE_NOTES = [
 
 // 2. TABELLA DELLE ARMI A DISTANZA (Tavola 3)
 export const SCREEN_RANGED_WEAPONS: RangedWeaponRow[] = [
-  { type: 'Revolver, Leggero', damage: '2 (L)', range: '20 / 40 / 80', magazine: '6', minStrength: 2, size: 1, cost: '••', example: 'SW M640 (.38 Special)' },
-  { type: 'Revolver, Pesante', damage: '3 (L)', range: '35 / 70 / 140', magazine: '6', minStrength: 3, size: 1, cost: '••', example: 'SW M29 (.44 Magnum)' },
-  { type: 'Pistola, Leggera', damage: '2 (L)', range: '20 / 40 / 80', magazine: '17+1', minStrength: 2, size: 1, cost: '•••', example: 'Glock 17 (9mm)' },
-  { type: 'Pistola, Pesante', damage: '3 (L)', range: '30 / 60 / 120', magazine: '7+1', minStrength: 3, size: 1, cost: '•••', example: 'Colt M1911A1 (.45 ACP)' },
-  { type: 'Fucile†', damage: '5 (L)', range: '200 / 400 / 800', magazine: '5+1', minStrength: 2, size: 3, cost: '••', example: 'Remington M-700 (30.06)' },
-  { type: 'Mitra, Piccolo*', damage: '2 (L)', range: '25 / 50 / 100', magazine: '30+1', minStrength: 2, size: 1, cost: '•••', example: 'Ingram Mac-10 (9mm)' },
-  { type: 'Mitra, Grande*†', damage: '3 (L)', range: '50 / 100 / 200', magazine: '30+1', minStrength: 3, size: 2, cost: '•••', example: 'HK MP-5 (9mm)' },
-  { type: "Fucile d'Assalto*†", damage: '4 (L)', range: '150 / 300 / 600', magazine: '42+1', minStrength: 3, size: 3, cost: '•••', example: 'Steyr-Aug (5.56mm)' },
-  { type: 'Shotgun†', damage: '4*** (L)', range: '20 / 40 / 80', magazine: '5+1', minStrength: 3, size: 2, cost: '••', example: 'Remington M870 (12-gauge) [Ritira 9]' },
-  { type: 'Balestra**†', damage: '3 (L)', range: '40 / 80 / 160', magazine: '1', minStrength: 3, size: 3, cost: '•••', example: 'Ricarica in 3 turni; può impalettare (-4, min 3 danni)' },
+  { type: 'Arco da Guerra / Composito†', damage: '3 (L)', range: '40 / 80 / 160', magazine: '1 (Incocco)', minStrength: 2, size: 3, cost: '••', example: 'Arco Lungo / Ricurvo (Silenzioso, riutilizza frecce)' },
+  { type: 'Revolver, Leggero', damage: '2 (L)', range: '20 / 40 / 80', magazine: '6 (Tamburo)', minStrength: 2, size: 1, cost: '••', example: 'SW M640 (.38 Special)' },
+  { type: 'Revolver, Pesante', damage: '3 (L)', range: '35 / 70 / 140', magazine: '6 (Tamburo)', minStrength: 3, size: 1, cost: '••', example: 'Colt Peacemaker .45 / SW M29 (.44 Magnum)' },
+  { type: 'Pistola, Leggera', damage: '2 (L)', range: '20 / 40 / 80', magazine: '17+1 (Caricatore)', minStrength: 2, size: 1, cost: '•••', example: 'Glock 17 (9mm)' },
+  { type: 'Pistola, Pesante', damage: '3 (L)', range: '30 / 60 / 120', magazine: '7+1 (Caricatore)', minStrength: 3, size: 1, cost: '•••', example: 'Colt M1911A1 (.45 ACP)' },
+  { type: 'Fucile da Caccia†', damage: '5 (L)', range: '200 / 400 / 800', magazine: '5+1 (Serbatoio)', minStrength: 2, size: 3, cost: '••', example: 'Remington M-700 / Winchester' },
+  { type: 'Fucile da Cecchino†', damage: '5 (L)', range: '250 / 500 / 1000', magazine: '10+1 (Caricatore)', minStrength: 3, size: 3, cost: '••••', example: 'Barrett .50 / L96 (Perf. 2, Mirino x8)' },
+  { type: 'Mitra, Piccolo*', damage: '2 (L)', range: '25 / 50 / 100', magazine: '30+1 (Caricatore)', minStrength: 2, size: 1, cost: '•••', example: 'Ingram Mac-10 (9mm)' },
+  { type: 'Mitra, Grande*†', damage: '3 (L)', range: '50 / 100 / 200', magazine: '30+1 (Caricatore)', minStrength: 3, size: 2, cost: '•••', example: 'HK MP-5 (9mm)' },
+  { type: "Fucile d'Assalto*†", damage: '4 (L)', range: '150 / 300 / 600', magazine: '42+1 (Caricatore)', minStrength: 3, size: 3, cost: '•••', example: 'Steyr-Aug / M4 Carbine (5.56mm)' },
+  { type: 'Shotgun / Fucile a Pompa†', damage: '4*** (L)', range: '20 / 40 / 80', magazine: '5+1 (Serbatoio)', minStrength: 3, size: 2, cost: '••', example: 'Remington M870 (12-gauge) [Ritira 9]' },
+  { type: 'Mitragliatrice Pesante*†', damage: '5 (L)', range: '200 / 400 / 800', magazine: '100 (Nastro)', minStrength: 4, size: 4, cost: '•••••', example: 'M60 / FN Minimi (Fuoco di soppressione, Perf. 1)' },
+  { type: 'Moschetto†', damage: '4 (L)', range: '60 / 120 / 240', magazine: '1 (Canna)', minStrength: 2, size: 3, cost: '••', example: 'Moschetto ad avancarica (Polvere nera)' },
+  { type: 'Trombone†', damage: '4 (L)', range: '15 / 30 / 60', magazine: '1 (Canna)', minStrength: 3, size: 2, cost: '••', example: 'Blunderbuss (Rosa larga, ignora 1 Difesa)' },
+  { type: 'Balestra**†', damage: '3 (L)', range: '40 / 80 / 160', magazine: '1 (Incocco)', minStrength: 3, size: 3, cost: '•••', example: 'Ricarica in 3 turni; può impalettare (-4, min 3 danni)' },
 ];
 
 export const SCREEN_RANGED_NOTES = [
@@ -110,9 +120,12 @@ export const SCREEN_ARMOR: ArmorRow[] = [
   { era: 'Moderna', name: 'Giacca di kevlar* (sottile)', rating: '1 / 2', minStrength: 1, defensePenalty: 0, speedPenalty: 0, cost: '•', bulletproof: true },
   { era: 'Moderna', name: 'Giubbotto antiproiettile*', rating: '2 / 3', minStrength: 1, defensePenalty: -1, speedPenalty: 0, cost: '••', bulletproof: true },
   { era: 'Moderna', name: 'Tenuta antisommossa*', rating: '3 / 4', minStrength: 2, defensePenalty: -2, speedPenalty: -1, cost: '•••', bulletproof: true },
+  { era: 'Moderna', name: 'Scudo Balistico / Tattico*', rating: '+2 Difesa (Copertura 2)', minStrength: 3, defensePenalty: 0, speedPenalty: -1, cost: '•••', bulletproof: true },
   { era: 'Antica', name: 'Cuoio (rigido)', rating: '1 / 0', minStrength: 2, defensePenalty: -1, speedPenalty: 0, cost: '•', bulletproof: false },
   { era: 'Antica', name: 'Cotta di maglia', rating: '2 / 1', minStrength: 3, defensePenalty: -2, speedPenalty: -2, cost: '••', bulletproof: false },
   { era: 'Antica', name: 'Corazza di Piastre', rating: '3 / 2', minStrength: 4, defensePenalty: -2, speedPenalty: -3, cost: '••••', bulletproof: false },
+  { era: 'Antica', name: 'Scudo in Legno / Ferro', rating: '+1 Difesa', minStrength: 2, defensePenalty: 0, speedPenalty: 0, cost: '•', bulletproof: false },
+  { era: 'Antica', name: 'Scudo a Torre', rating: '+2 Difesa (Copertura)', minStrength: 3, defensePenalty: 0, speedPenalty: -1, cost: '••', bulletproof: false },
 ];
 
 export const SCREEN_ARMOR_NOTES = [

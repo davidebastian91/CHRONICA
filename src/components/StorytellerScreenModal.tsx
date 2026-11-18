@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import type { Character } from '../types';
+import { getWeaponMagazineState } from '../utils/inventorySystem';
 import {
   X,
   Swords,
@@ -45,6 +47,7 @@ import { UNIFIED_XP_COST_TABLE } from '../utils/experienceRules';
 interface StorytellerScreenModalProps {
   isOpen: boolean;
   onClose: () => void;
+  character?: Character | null;
 }
 
 type ScreenTab = 'combat' | 'weapons' | 'lineages' | 'rolls' | 'hazards' | 'scans';
@@ -72,7 +75,11 @@ const ORIGINAL_SCANS = [
   },
 ];
 
-export const StorytellerScreenModal: React.FC<StorytellerScreenModalProps> = ({ isOpen, onClose }) => {
+export const StorytellerScreenModal: React.FC<StorytellerScreenModalProps> = ({ 
+  isOpen, 
+  onClose,
+  character,
+}) => {
   const [activeTab, setActiveTab] = useState<ScreenTab>('combat');
   const [searchQuery, setSearchQuery] = useState('');
   const [zoomedScan, setZoomedScan] = useState<{ title: string; src: string } | null>(null);
@@ -305,6 +312,80 @@ export const StorytellerScreenModal: React.FC<StorytellerScreenModalProps> = ({ 
           {/* ============================================================== */}
           {activeTab === 'weapons' && (
             <div className="space-y-6">
+              {/* SEZIONE 1: EQUIPAGGIAMENTO E ARMI ATTUALI DEL PROTAGONISTA / SQUADRA */}
+              {character && (
+                <div className="bg-gradient-to-r from-amber-950/40 via-slate-950 to-indigo-950/40 border-2 border-amber-600/60 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-800/40 pb-3">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-amber-600/20 border border-amber-500/50 flex items-center justify-center text-amber-300">
+                        <Swords className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-black text-sm sm:text-base text-amber-200">
+                          Equipaggiamento & Armi Attive: {character.name}
+                        </h3>
+                        <p className="text-[11px] font-mono text-slate-400">
+                          Stato in tempo reale di tamburi, caricatori, armature e scorte
+                        </p>
+                      </div>
+                    </div>
+                    {character.armor !== undefined && (
+                      <span className="px-2.5 py-1 rounded-xl bg-emerald-950 text-emerald-300 border border-emerald-700 font-mono text-xs font-bold flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5" />
+                        Armatura Attiva: +{character.armor}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Griglia armi e munizioni del personaggio */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                    {character.inventory && character.inventory.map((rawLine, idx) => {
+                      const clean = String(rawLine).trim();
+                      const isWeapon = /spada|revolver|pistola|fucile|arco|balestra|pugnale|daga|ascia|martello|coltello|maglio|lame/i.test(clean);
+                      const isAmmo = /munizion|proiettil|faretra|frecce|dardi|cartucc/i.test(clean);
+                      const isArmor = /armatura|giubbotto|corazza|cuoio|cotta|kevlar|scudo/i.test(clean);
+
+                      if (!isWeapon && !isAmmo && !isArmor) return null;
+
+                      const mag = isWeapon ? getWeaponMagazineState(character, clean) : null;
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-2xl border flex flex-col justify-between space-y-2 ${
+                            isWeapon
+                              ? mag && mag.loaded === 0
+                                ? 'bg-red-950/30 border-red-800/80'
+                                : 'bg-slate-900/90 border-slate-700/80'
+                              : isArmor
+                              ? 'bg-emerald-950/30 border-emerald-800/70'
+                              : 'bg-amber-950/20 border-amber-800/50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-serif font-bold text-xs text-slate-100">
+                              {clean}
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded uppercase font-semibold shrink-0 bg-slate-950 text-slate-400 border border-slate-800">
+                              {isWeapon ? 'Arma' : isArmor ? 'Corazza' : 'Munizioni'}
+                            </span>
+                          </div>
+
+                          {mag && mag.hasMagazine && (
+                            <div className="flex items-center justify-between text-[11px] font-mono pt-1 border-t border-slate-800">
+                              <span className="text-slate-400">{mag.label}:</span>
+                              <span className={`font-black ${mag.loaded === 0 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                                {mag.loaded} / {mag.max} colpi {mag.loaded === 0 && '(SCARICO)'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Tabella Armi da Mischia */}
               <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 space-y-3">
                 <h3 className="font-serif font-bold text-sm uppercase tracking-wider text-amber-300">

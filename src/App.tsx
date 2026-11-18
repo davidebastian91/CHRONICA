@@ -2524,6 +2524,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
       <StorytellerScreenModal
         isOpen={isStorytellerScreenOpen}
         onClose={() => setIsStorytellerScreenOpen(false)}
+        character={character}
       />
 
       {/* Modale Reperto Visivo Antico / Pergamena / Rune (Esclusivo PC / Tavolo) */}
