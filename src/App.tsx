@@ -540,6 +540,8 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
           content: `«...ORDINE RISERVATO DEL SINDACATO ELFICO:\n\nIntercettare ed eliminare il bersaglio prioritario noto come Cacciatore Silenzioso e la sua scorta.\nRecuperare intatto il manufatto instabile denominato "Cuore di Scorie" prima che superi il confine di Cenerevia.\n\nIn caso di complicazioni o scontro prolungato, ripiegare e attendere il contatto presso la vecchia forgia del nano armaiolo nella Landa di Nessuno...»`,
           authorOrSeal: 'Sigillo dei Sicari del Sindacato Elfico',
           secretReveal: 'Nota cifrata in calce: "Vaelen è contrassegnato per l\'eliminazione. Nessun prigioniero."',
+          isEncrypted: true,
+          cipherText: `[§-99//TX-ELV-7] :: ORD-CFR//902-SE\n\nᚠᛗ ᛉᚦᚨ-ᛚ • 0x4E7A 0x991B 0xCC04\n«••• §-SIND-ELV//CRPT: 99182-KX •••»\n[BER-PRIOR: 0xCAC-SIL // TAR: CUORE-SCORIE]\n\nᛞᛟᚱ-ᚲᛗ ᚠᚢᚦ ᚨᚱᚲ ᚺᚾᛁ ᛃᛇᛈ ᛏᛒ ᛖᛗᛚ ᛜᛞᛟ\n«FORG-NANO//LANDA-00: RIP-CONTATTO»`,
         };
         return [...prev, autoDoc];
       });
@@ -617,6 +619,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
           content: `«...ORDINE RISERVATO DEL SINDACATO ELFICO:\n\nIntercettare ed eliminare il bersaglio prioritario noto come Cacciatore Silenzioso e la sua scorta.\nRecuperare intatto il manufatto instabile denominato "Cuore di Scorie" prima che superi il confine di Cenerevia.\n\nIn caso di complicazioni o scontro prolungato, ripiegare e attendere il contatto presso la vecchia forgia del nano armaiolo nella Landa di Nessuno...»`,
           authorOrSeal: 'Sigillo dei Sicari del Sindacato Elfico',
           secretReveal: 'Nota in codice sul retro: "Vaelen è contrassegnato per l\'eliminazione. Nessun prigioniero."',
+          isEncrypted: /cifrat|codice|critt/i.test(name + ' ' + desc),
         };
         setDiscoveredHandouts((prev) => {
           if (prev.some((h) => h.title.toLowerCase().includes('dispaccio') || h.title.toLowerCase() === autoDoc.title.toLowerCase())) {
@@ -1840,6 +1843,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         content: `«...ORDINE RISERVATO DEL SINDACATO ELFICO:\n\nIntercettare ed eliminare il bersaglio prioritario noto come Cacciatore Silenzioso e la sua scorta.\nRecuperare intatto il manufatto instabile denominato "Cuore di Scorie" prima che superi il confine di Cenerevia.\n\nIn caso di complicazioni o scontro prolungato, ripiegare e attendere il contatto presso la vecchia forgia del nano armaiolo nella Landa di Nessuno...»`,
         authorOrSeal: 'Sigillo dei Sicari del Sindacato Elfico',
         secretReveal: 'Nota in codice sul retro: "Vaelen è contrassegnato per l\'eliminazione. Nessun prigioniero."',
+        isEncrypted: /cifrat|codice|critt/i.test(itemName + ' ' + (description || '')),
       };
       setDiscoveredHandouts((prev) => {
         if (prev.some((h) => h.title.toLowerCase().includes('dispaccio') || h.title.toLowerCase() === docHandout.title.toLowerCase())) {
@@ -2527,6 +2531,14 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
         handout={activeHandoutModal}
         isOpen={Boolean(activeHandoutModal)}
         onClose={() => setActiveHandoutModal(null)}
+        onHandoutDecoded={(handoutId) => {
+          setDiscoveredHandouts((prev) =>
+            prev.map((h) => (h.id === handoutId ? { ...h, revealed: true } : h))
+          );
+          if (activeHandoutModal && activeHandoutModal.id === handoutId) {
+            setActiveHandoutModal({ ...activeHandoutModal, revealed: true });
+          }
+        }}
       />
 
       {/* Modale Partecipa a un Tavolo con Codice Stanza */}

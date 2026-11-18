@@ -498,7 +498,12 @@ export interface HandoutSpec {
   content: string;
   authorOrSeal?: string;
   secretReveal?: string;
+  secretHint?: string;
   revealed?: boolean;
+  cipherText?: string;
+  isEncrypted?: boolean;
+  bountyReward?: string;
+  targetName?: string;
 }
 
 export interface TabletopTurnState {

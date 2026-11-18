@@ -14,6 +14,7 @@ import {
   MapPin,
   Sparkles,
   Eye,
+  Lock,
 } from 'lucide-react';
 
 interface TacticalSidePanelProps {
@@ -382,35 +383,52 @@ export const TacticalSidePanel: React.FC<TacticalSidePanelProps> = ({
                       📜 Documenti &amp; Dispacci Leggibili ({discoveredHandouts.length})
                     </span>
                     <div className="space-y-2">
-                      {discoveredHandouts.map((h) => (
-                        <div
-                          key={h.id}
-                          onClick={() => onOpenHandoutModal(h)}
-                          className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-cyan-600/80 transition-all cursor-pointer flex items-center justify-between group shadow-md"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-800/60 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
-                              {h.type === 'runic_stone' ? (
-                                <Sparkles className="w-4 h-4" />
-                              ) : (
-                                <FileText className="w-4 h-4" />
-                              )}
+                      {discoveredHandouts.map((h) => {
+                        const isEncrypted = Boolean(
+                          h.isEncrypted || 
+                          (h.title && /cifrat|codice|critt/i.test(h.title))
+                        );
+                        return (
+                          <div
+                            key={h.id}
+                            onClick={() => onOpenHandoutModal(h)}
+                            className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-cyan-600/80 transition-all cursor-pointer flex items-center justify-between group shadow-md"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-800/60 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
+                                {h.type === 'runic_stone' ? (
+                                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                                ) : isEncrypted && !h.revealed ? (
+                                  <Lock className="w-4 h-4 text-amber-400" />
+                                ) : (
+                                  <FileText className="w-4 h-4 text-amber-300" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-serif font-bold text-xs text-slate-100 group-hover:text-cyan-200 transition-colors flex items-center gap-1.5">
+                                  <span>{h.title}</span>
+                                  {isEncrypted && (
+                                    <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${
+                                      h.revealed 
+                                        ? 'bg-emerald-950 text-emerald-300 border-emerald-800' 
+                                        : 'bg-amber-950 text-amber-300 border-amber-800'
+                                    }`}>
+                                      {h.revealed ? '✓ Decifrato' : '🔒 Cifrato'}
+                                    </span>
+                                  )}
+                                </p>
+                                <p className="text-[10px] font-mono text-slate-400">
+                                  {h.authorOrSeal || (h.type === 'military_dispatch' ? 'Dispaccio Tattico' : 'Reperto d\'Epoca')}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-serif font-bold text-xs text-slate-100 group-hover:text-cyan-200 transition-colors">
-                                {h.title}
-                              </p>
-                              <p className="text-[10px] font-mono text-slate-400">
-                                {h.authorOrSeal || (h.type === 'military_dispatch' ? 'Dispaccio Tattico Cifrato' : 'Reperto d\'Epoca')}
-                              </p>
-                            </div>
-                          </div>
 
-                          <span className="p-1.5 rounded-lg bg-slate-950 text-slate-400 group-hover:text-cyan-300">
-                            <Eye className="w-4 h-4" />
-                          </span>
-                        </div>
-                      ))}
+                            <span className="p-1.5 rounded-lg bg-slate-950 text-slate-400 group-hover:text-cyan-300">
+                              <Eye className="w-4 h-4" />
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

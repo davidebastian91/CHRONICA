@@ -568,6 +568,15 @@ function parseAIResponse(rawText, defaultSuggestions) {
       if (!handout.id) {
         handout.id = `handout_${Date.now()}`;
       }
+      if (handout.secretHint && !handout.secretReveal) {
+        handout.secretReveal = handout.secretHint;
+      }
+      if (!handout.secretHint && handout.secretReveal) {
+        handout.secretHint = handout.secretReveal;
+      }
+      if (handout.isEncrypted === undefined) {
+        handout.isEncrypted = /cifrat|codice|critt|segret/i.test((handout.title || '') + ' ' + (handout.subtitle || ''));
+      }
       cleanedText = cleanedText.replace(handoutMatch[0], '').trim();
     } catch {}
   }
