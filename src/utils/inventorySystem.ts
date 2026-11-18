@@ -649,9 +649,11 @@ export function useConsumable(char: Character, itemId: string): {
     lower.includes('cura')
   ) {
     if (updatedChar.health && updatedChar.health.length > 0) {
-      const healedHealth = healDamageFromHealth(updatedChar.health, 1, 'bashing');
+      const isMedikit = lower.includes('kit medico') || lower.includes('pronto soccorso') || lower.includes('medikit');
+      const healAmount = isMedikit ? 2 : 1; // Un kit medico professionale risana 2 caselle di ferita (anche letali)
+      const healedHealth = healDamageFromHealth(updatedChar.health, healAmount, 'any');
       updatedChar = { ...updatedChar, health: healedHealth };
-      healNotice = ' ❤️ Hai risanato 1 casella di salute!';
+      healNotice = ` ❤️ Hai risanato ${healAmount} caselle di salute!`;
     }
   }
 

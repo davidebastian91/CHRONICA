@@ -1034,7 +1034,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
 
           // Aggiornamento automatico della Salute del giocatore su Cure ricevute dal Narratore
           if (response.playerHeal && activeChar) {
-            const healedHealth = healDamageFromHealth(activeChar.health, response.playerHeal.points, response.playerHeal.type || 'bashing');
+            const healedHealth = healDamageFromHealth(activeChar.health, response.playerHeal.points, response.playerHeal.type || 'any');
             let healedChar = { ...activeChar, health: healedHealth };
             if (/kit\s*medico|benda|pozion|medikit|pronto\s*soccorso/i.test(response.playerHeal.reason || '')) {
               const res = consumeNamedItem(healedChar, 'kit medico');
@@ -1318,7 +1318,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
 
       // Aggiornamento automatico della Salute del protagonista su Cure ricevute dal Narratore
       if (response.playerHeal && character) {
-        const healedHealth = healDamageFromHealth(character.health, response.playerHeal.points, response.playerHeal.type || 'bashing');
+        const healedHealth = healDamageFromHealth(character.health, response.playerHeal.points, response.playerHeal.type || 'any');
         let healedChar = { ...character, health: healedHealth };
         if (/kit\s*medico|benda|pozion|medikit|pronto\s*soccorso/i.test(response.playerHeal.reason || '')) {
           const res = consumeNamedItem(healedChar, 'kit medico');
@@ -1479,7 +1479,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
 
       // Aggiornamento automatico della Salute del giocatore su Cure narrative
       if (response.playerHeal && targetChar) {
-        const healedHealth = healDamageFromHealth(targetChar.health, response.playerHeal.points, response.playerHeal.type || 'bashing');
+        const healedHealth = healDamageFromHealth(targetChar.health, response.playerHeal.points, response.playerHeal.type || 'any');
         let healedChar = { ...targetChar, health: healedHealth };
         if (/kit\s*medico|benda|pozion|medikit|pronto\s*soccorso/i.test(response.playerHeal.reason || '')) {
           const res = consumeNamedItem(healedChar, 'kit medico');
@@ -1762,7 +1762,7 @@ function HostApp({ onJoinTabletopRoom }: HostAppProps = {}) {
 
       // Aggiornamento automatico della Salute del giocatore su Cure narrative
       if (response.playerHeal && activeChar) {
-        const healedHealth = healDamageFromHealth(activeChar.health, response.playerHeal.points, response.playerHeal.type || 'bashing');
+        const healedHealth = healDamageFromHealth(activeChar.health, response.playerHeal.points, response.playerHeal.type || 'any');
         let healedChar = { ...activeChar, health: healedHealth };
         if (/kit\s*medico|benda|pozion|medikit|pronto\s*soccorso/i.test(response.playerHeal.reason || '')) {
           const res = consumeNamedItem(healedChar, 'kit medico');

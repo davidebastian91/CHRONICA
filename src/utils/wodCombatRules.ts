@@ -1198,10 +1198,8 @@ export function applyDamageToHealth(
 export function healDamageFromHealth(
   currentHealth: HealthLevel[],
   points: number,
-  damageType: DamageType = 'bashing'
+  damageType: DamageType | 'any' = 'any'
 ): HealthLevel[] {
-  const effectiveDamageType: 'bashing' | 'lethal' | 'aggravated' =
-    damageType === 'aggravated' || damageType === 'lethal' ? damageType : 'bashing';
   const healthCopy: HealthLevel[] = JSON.parse(JSON.stringify(currentHealth));
   const severityWeight: Record<DamageType, number> = {
     aggravated: 3,
@@ -1215,10 +1213,52 @@ export function healDamageFromHealth(
     .filter((d) => d !== 'none');
 
   let remaining = points;
-  for (let i = currentDamages.length - 1; i >= 0 && remaining > 0; i--) {
-    if (currentDamages[i] === effectiveDamageType) {
-      currentDamages.splice(i, 1);
-      remaining--;
+
+  if (damageType === 'aggravated') {
+    for (let i = currentDamages.length - 1; i >= 0 && remaining > 0; i--) {
+      if (currentDamages[i] === 'aggravated') {
+        currentDamages.splice(i, 1);
+        remaining--;
+      }
+    }
+  } else if (damageType === 'lethal') {
+    // Cura prima i letali; se finiti, cura i contundenti
+    for (let i = currentDamages.length - 1; i >= 0 && remaining > 0; i--) {
+      if (currentDamages[i] === 'lethal') {
+        currentDamages.splice(i, 1);
+        remaining--;
+      }
+    }
+    for (let i = currentDamages.length - 1; i >= 0 && remaining > 0; i--) {
+      if (currentDamages[i] === 'bashing') {
+        currentDamages.splice(i, 1);
+        remaining--;
+      }
+    }
+  } else if (damageType === 'bashing') {
+    // Cura prima i contundenti
+    for (let i = currentDamages.length - 1; i >= 0 && remaining > 0; i--) {
+      if (currentDamages[i] === 'bashing') {
+        currentDamages.splice(i, 1);
+        remaining--;
+      }
+    }
+    // SMART FALLBACK: Se non ci sono contundenti ma ci sono danni letali, cura i letali!
+    for (let i = currentDamages.length - 1; i >= 0 && remaining > 0; i--) {
+      if (currentDamages[i] === 'lethal') {
+        currentDamages.splice(i, 1);
+        remaining--;
+      }
+    }
+  } else {
+    // 'any': cura prima i meno gravi (bashing, poi lethal, poi aggravated)
+    for (const typeToTarget of ['bashing', 'lethal', 'aggravated'] as DamageType[]) {
+      for (let i = currentDamages.length - 1; i >= 0 && remaining > 0; i--) {
+        if (currentDamages[i] === typeToTarget) {
+          currentDamages.splice(i, 1);
+          remaining--;
+        }
+      }
     }
   }
 
