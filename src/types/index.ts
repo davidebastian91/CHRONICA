@@ -255,6 +255,7 @@ export interface Character {
   health: HealthLevel[];  // Salute = Costituzione + Taglia
   inventory: string[];
   structuredInventory?: InventoryItem[];
+  weaponMagazines?: Record<string, number>; // Colpi attualmente carichi per arma (es. { 'firearms_revolver_heavy': 0 })
   notes: string;
   backgroundNotes?: string;
   isProtagonistSlot?: boolean;

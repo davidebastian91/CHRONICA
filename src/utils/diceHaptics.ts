@@ -207,6 +207,87 @@ class DiceSensorySystem {
       }
     } catch {}
   }
+
+  /**
+   * Suono scatto a vuoto (Dry-fire: cane che batte a vuoto su camera/tamburo scarico)
+   */
+  public playDryFireClick() {
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      // Due scatti metallici ravvicinati ("CLICK-CLICK")
+      [0, 0.08].forEach((offset) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, now + offset);
+        osc.frequency.exponentialRampToValueAtTime(80, now + offset + 0.04);
+        gain.gain.setValueAtTime(0.08, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.04);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.04);
+      });
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([20, 30, 20]);
+      }
+    } catch {}
+  }
+
+  /**
+   * Suono meccanico di ricarica arma (rotazione tamburo / inserimento caricatore o nastro)
+   */
+  public playReloadMechanicalSound() {
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      // 1. Scatto di sgancio / espulsione bossoli (0s)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(450, now);
+      osc1.frequency.exponentialRampToValueAtTime(180, now + 0.07);
+      gain1.gain.setValueAtTime(0.06, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.07);
+
+      // 2. Inserimento colpi / caricatore (0.12s)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(600, now + 0.12);
+      osc2.frequency.exponentialRampToValueAtTime(300, now + 0.18);
+      gain2.gain.setValueAtTime(0.09, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.18);
+
+      // 3. Chiusura tamburo / armamento otturatore (0.24s)
+      const osc3 = ctx.createOscillator();
+      const gain3 = ctx.createGain();
+      osc3.type = 'square';
+      osc3.frequency.setValueAtTime(220, now + 0.24);
+      osc3.frequency.exponentialRampToValueAtTime(110, now + 0.32);
+      gain3.gain.setValueAtTime(0.12, now + 0.24);
+      gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+      osc3.connect(gain3);
+      gain3.connect(ctx.destination);
+      osc3.start(now + 0.24);
+      osc3.stop(now + 0.32);
+
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([30, 40, 60]);
+      }
+    } catch {}
+  }
 }
 
 export const diceSensory = new DiceSensorySystem();

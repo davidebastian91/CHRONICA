@@ -12,7 +12,14 @@ import {
   getSuccessRuling,
   getHealthPenalty,
 } from '../utils/wodActionRules';
-import { checkAmmoStatus, consumeAmmo, getCharacterInventory } from '../utils/inventorySystem';
+import {
+  checkAmmoStatus,
+  getCharacterInventory,
+  getWeaponMagazineState,
+  reloadWeaponMagazine,
+  consumeWeaponMagazineAmmo,
+} from '../utils/inventorySystem';
+import { diceSensory } from '../utils/diceHaptics';
 import {
   WOD_WEAPONS_CATALOG,
   rollInitiative,
@@ -32,6 +39,7 @@ import {
   Zap,
   Mic,
   MicOff,
+  RotateCw,
 } from 'lucide-react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { Dice3DStage } from './Dice3DStage';
@@ -438,12 +446,26 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
   const canSpendWillpower = (character?.willpower?.current || 0) > 0;
 
   const ammoStatus = character ? checkAmmoStatus(character, currentWeapon?.name) : null;
+  const magState =
+    character && isRangedAction
+      ? getWeaponMagazineState(character, currentWeapon?.name, currentWeapon?.clipSize)
+      : null;
   const isOutOfAmmo = Boolean(
-    isRangedAction && ammoStatus && ammoStatus.ammoItems.length > 0 && ammoStatus.totalAmmo === 0
+    isRangedAction && magState
+      ? !magState.isLoaded
+      : isRangedAction && ammoStatus && ammoStatus.ammoItems.length > 0 && ammoStatus.totalAmmo === 0
   );
 
   // Lancio Dadi Storytelling System (Soglia 8+, 10-Again / 9-Again, Tiro di Fortuna se <= 0)
   const handleRoll = () => {
+    if (isRangedAction && magState && !magState.isLoaded) {
+      diceSensory.playDryFireClick();
+      alert(
+        `⚠️ CLICK! ${magState.label} SCARICO (0/${magState.max})!\nDevi ricaricare il ${magState.label} premendo sul pulsante "Ricarica" prima di poter sparare.`
+      );
+      return;
+    }
+
     if (isOutOfAmmo) {
       alert(
         '⚠️ Impossibile sparare: Munizioni Esaurite (0 rimaste)! Devi cambiare arma, passare al corpo a corpo o ricaricare.'
@@ -581,25 +603,29 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
         willpowerNote = ' [Volontà Spesa: +3 Dadi]';
       }
 
-      // Se è un'azione a distanza, consuma munizioni in base alla modalità di fuoco
+      // Se è un'azione a distanza, consuma munizioni dal tamburo/caricatore/nastro dell'arma
       let ammoDetails = '';
       if (isRangedAction && currentChar && onUpdateCharacter) {
         const ammoAmount = fireMode === 'fullAuto' ? 'all' : fireMode === 'shortBurst' ? 3 : 1;
         const weaponName = lastRoll?.weaponName || currentWeapon?.name;
         const weaponClip = currentWeapon?.clipSize;
-        const ammoRes = consumeAmmo(currentChar, ammoAmount, weaponName, weaponClip);
-        if (ammoRes.success) {
-          currentChar = ammoRes.updatedChar;
+        const magRes = consumeWeaponMagazineAmmo(currentChar, ammoAmount, weaponName, weaponClip);
+        if (magRes.success) {
+          currentChar = magRes.updatedChar;
           onUpdateCharacter(currentChar);
           const modeName =
             fireMode === 'fullAuto'
-              ? 'Svuotato Caricatore'
+              ? 'Svuotato'
               : fireMode === 'shortBurst'
               ? 'Raffica 3 colpi'
               : 'Colpo singolo';
-          ammoDetails = ` [Munizioni: -${ammoRes.consumedCount} (${modeName}, Rimaste: ${ammoRes.remaining})]`;
+          const statusText = magRes.newLoaded === 0 ? ' (SCARICO!)' : '';
+          ammoDetails = ` [${magRes.label}: ${magRes.newLoaded}/${magRes.maxLoaded}${statusText} (${modeName}), Riserva in Borsa: ${magRes.remainingReserve}]`;
+          if (magRes.newLoaded === 0) {
+            diceSensory.playDryFireClick();
+          }
         } else {
-          ammoDetails = ` [Munizioni: ${ammoRes.message}]`;
+          ammoDetails = ` [Munizioni: ${magRes.message}]`;
         }
       }
 
@@ -946,6 +972,72 @@ export const DiceRollerModal: React.FC<DiceRollerModalProps> = ({
                           })}
                         </select>
                       </div>
+
+                      {/* STATO DEL TAMBURO / CARICATORE / NASTRO & PULSANTE RICARICA */}
+                      {isRangedAction && magState && (
+                        <div className={`p-3 rounded-2xl border transition-all ${
+                          magState.loaded === 0 
+                            ? 'bg-red-950/40 border-red-800/80 shadow-[0_0_20px_rgba(239,68,68,0.2)]' 
+                            : magState.loaded <= 2
+                            ? 'bg-amber-950/30 border-amber-800/60'
+                            : 'bg-slate-950/80 border-slate-800'
+                        }`}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center space-x-2.5">
+                              <span className="text-lg">
+                                {magState.kind === 'tamburo' ? '🔄' : magState.kind === 'nastro' ? '⛓️' : magState.kind === 'serbatoio' ? '🔋' : '📦'}
+                              </span>
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-mono text-xs font-bold text-slate-200">
+                                    {magState.label}:
+                                  </span>
+                                  <span className={`font-mono text-sm font-black ${
+                                    magState.loaded === 0 
+                                      ? 'text-red-400' 
+                                      : magState.loaded <= 2
+                                      ? 'text-amber-400'
+                                      : 'text-emerald-400'
+                                  }`}>
+                                    {magState.loaded} / {magState.max} colpi
+                                  </span>
+                                  {magState.loaded === 0 && (
+                                    <span className="px-1.5 py-0.5 rounded bg-red-900 text-red-200 border border-red-700 text-[10px] font-mono font-black uppercase tracking-wider animate-pulse">
+                                      SCARICO
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[11px] font-mono text-slate-400 block mt-0.5">
+                                  Riserva in borsa: <strong className="text-amber-300 font-bold">{magState.reserve}</strong> colpi rimasti
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Pulsante Ricarica */}
+                            {magState.canReload && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!character || !onUpdateCharacter) return;
+                                  const rel = reloadWeaponMagazine(character, currentWeapon?.name, currentWeapon?.clipSize);
+                                  if (rel.success) {
+                                    onUpdateCharacter(rel.updatedChar);
+                                    diceSensory.playReloadMechanicalSound();
+                                  }
+                                }}
+                                className={`py-1.5 px-3 rounded-xl font-mono font-black text-xs uppercase tracking-wider flex items-center space-x-1.5 shadow-md cursor-pointer transition-transform hover:scale-105 active:scale-95 ${
+                                  magState.loaded === 0
+                                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 animate-bounce'
+                                    : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-700/50'
+                                }`}
+                              >
+                                <RotateCw className="w-3.5 h-3.5" />
+                                <span>Ricarica {magState.label} (+{Math.min(magState.max - magState.loaded, magState.reserve)})</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Modalità di Fuoco per Armi da Fuoco / a Distanza */}
                       {isRangedAction && (

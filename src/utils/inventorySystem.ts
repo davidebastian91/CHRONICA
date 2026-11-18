@@ -143,7 +143,11 @@ export function findMatchingAmmoItem(items: InventoryItem[], weaponNameOrCategor
     weapon.includes('moschetto') ||
     weapon.includes('trombone') ||
     weapon.includes('canne') ||
-    weapon.includes('firearms')
+    weapon.includes('firearms') ||
+    weapon.includes('shotgun') ||
+    weapon.includes('mitragliatrice') ||
+    weapon.includes('peacemaker') ||
+    weapon.includes('magnum')
   ) {
     const bulletIdx = items.findIndex(
       (i) => i.category === 'ammo' && i.quantity > 0 && (/proiettil|munizion|cartucc|pallottole|colp/i.test(i.name))
@@ -153,6 +157,333 @@ export function findMatchingAmmoItem(items: InventoryItem[], weaponNameOrCategor
 
   // 3. Fallback: prima munizione disponibile
   return items.findIndex((i) => i.category === 'ammo' && i.quantity > 0);
+}
+
+export type MagazineKind = 'tamburo' | 'caricatore' | 'nastro' | 'serbatoio' | 'camera';
+
+export interface WeaponMagazineState {
+  hasMagazine: boolean;
+  kind: MagazineKind;
+  label: string; // "Tamburo", "Caricatore", "Nastro", "Serbatoio", "Camera di Scoppio", "Incocco"
+  loaded: number;
+  max: number;
+  reserve: number;
+  isLoaded: boolean;
+  canReload: boolean;
+  reserveItemName?: string;
+  weaponLineIndex: number;
+}
+
+/**
+ * Determina il tipo e l'etichetta del contenitore munizioni dell'arma.
+ */
+export function getWeaponMagazineKind(weaponNameOrCategory?: string): { kind: MagazineKind; label: string } {
+  const w = (weaponNameOrCategory || '').toLowerCase();
+  if (
+    w.includes('revolver') ||
+    w.includes('peacemaker') ||
+    w.includes('magnum') ||
+    w.includes('.44') ||
+    w.includes('.38') ||
+    w.includes('derringer')
+  ) {
+    return { kind: 'tamburo', label: 'Tamburo' };
+  }
+  if (
+    w.includes('mitragliatrice') ||
+    w.includes('lmg') ||
+    w.includes('m60') ||
+    w.includes('minimi') ||
+    w.includes('supporto')
+  ) {
+    return { kind: 'nastro', label: 'Nastro' };
+  }
+  if (
+    w.includes('shotgun') ||
+    w.includes('pompa') ||
+    w.includes('m870') ||
+    w.includes('winchester') ||
+    w.includes('remington')
+  ) {
+    return { kind: 'serbatoio', label: 'Serbatoio' };
+  }
+  if (
+    w.includes('moschetto') ||
+    w.includes('archibugio') ||
+    w.includes('trombone') ||
+    w.includes('flintlock') ||
+    w.includes('pietra focaia')
+  ) {
+    return { kind: 'camera', label: 'Canna' };
+  }
+  if (w.includes('arco') || w.includes('balestra') || w.includes('bow') || w.includes('crossbow')) {
+    return { kind: 'camera', label: 'Incocco' };
+  }
+  return { kind: 'caricatore', label: 'Caricatore' };
+}
+
+/**
+ * Ottiene lo stato attuale del tamburo/caricatore/nastro dell'arma per il personaggio.
+ */
+export function getWeaponMagazineState(
+  char: Character,
+  weaponName?: string,
+  weaponClipSize?: number
+): WeaponMagazineState {
+  const { kind, label } = getWeaponMagazineKind(weaponName);
+  const wNameLower = (weaponName || '').toLowerCase().trim();
+
+  // Capienza massima
+  const defaultMax =
+    weaponClipSize && weaponClipSize > 0
+      ? weaponClipSize
+      : kind === 'tamburo'
+      ? 6
+      : kind === 'nastro'
+      ? 100
+      : kind === 'serbatoio'
+      ? 6
+      : kind === 'camera'
+      ? 1
+      : 15;
+
+  const max = defaultMax;
+
+  // Trova la riga dell'arma nell'inventario del personaggio
+  const inv = char.inventory || [];
+  let weaponLineIndex = -1;
+  let rawWeaponString = '';
+
+  for (let i = 0; i < inv.length; i++) {
+    const line = String(inv[i] || '').trim();
+    const lineLower = line.toLowerCase();
+    if (wNameLower) {
+      // Confronto per nome o parole chiave (es. "revolver", "colt", "arco")
+      const keywords = wNameLower.split(/[\s—\-\/]+/).filter((k) => k.length > 3);
+      if (lineLower.includes(wNameLower) || (keywords.length > 0 && keywords.some((k) => lineLower.includes(k)))) {
+        weaponLineIndex = i;
+        rawWeaponString = line;
+        break;
+      }
+    }
+  }
+
+  // Estrai i colpi attualmente carichi dalla riga dell'inventario
+  let loaded = max;
+  let hasTag = false;
+
+  if (rawWeaponString) {
+    const tagMatch = rawWeaponString.match(
+      /\[(?:Tamburo|Caricatore|Nastro|Serbatoio|Canna|Incocco|Colpi)?:\s*(\d+)\/(\d+).*?\]/i
+    );
+    if (tagMatch) {
+      loaded = parseInt(tagMatch[1], 10);
+      hasTag = true;
+    }
+  }
+
+  // Fallback da weaponMagazines
+  if (!hasTag && char.weaponMagazines) {
+    const key = Object.keys(char.weaponMagazines).find(
+      (k) => k.toLowerCase() === wNameLower || wNameLower.includes(k.toLowerCase())
+    );
+    if (key !== undefined && typeof char.weaponMagazines[key] === 'number') {
+      loaded = char.weaponMagazines[key];
+      hasTag = true;
+    }
+  }
+
+  // Se non era specificato ed è un'arma specifica come il revolver che ha appena sparato
+  if (!hasTag) {
+    // Se la stringa indica scarico
+    if (/scaric[oa]/i.test(rawWeaponString)) {
+      loaded = 0;
+    } else {
+      loaded = max;
+    }
+  }
+
+  // Calcolo riserva in borsa
+  const items = getCharacterInventory(char);
+  const ammoIdx = findMatchingAmmoItem(items, weaponName);
+  const reserve = ammoIdx !== -1 ? items[ammoIdx].quantity : 0;
+  const reserveItemName = ammoIdx !== -1 ? items[ammoIdx].name : undefined;
+
+  return {
+    hasMagazine: true,
+    kind,
+    label,
+    loaded: Math.max(0, Math.min(max, loaded)),
+    max,
+    reserve,
+    isLoaded: loaded > 0,
+    canReload: loaded < max && reserve > 0,
+    reserveItemName,
+    weaponLineIndex,
+  };
+}
+
+/**
+ * Ricarica il tamburo/caricatore/nastro dell'arma prelevando colpi dalla riserva nell'inventario.
+ */
+export function reloadWeaponMagazine(
+  char: Character,
+  weaponName?: string,
+  weaponClipSize?: number
+): {
+  updatedChar: Character;
+  success: boolean;
+  reloadedCount: number;
+  newLoaded: number;
+  maxLoaded: number;
+  remainingReserve: number;
+  label: string;
+  message: string;
+} {
+  const state = getWeaponMagazineState(char, weaponName, weaponClipSize);
+  const needed = state.max - state.loaded;
+
+  if (needed <= 0) {
+    return {
+      updatedChar: char,
+      success: false,
+      reloadedCount: 0,
+      newLoaded: state.loaded,
+      maxLoaded: state.max,
+      remainingReserve: state.reserve,
+      label: state.label,
+      message: `⚠️ Il ${state.label} è già completamente carico (${state.loaded}/${state.max})!`,
+    };
+  }
+
+  if (state.reserve <= 0) {
+    return {
+      updatedChar: char,
+      success: false,
+      reloadedCount: 0,
+      newLoaded: state.loaded,
+      maxLoaded: state.max,
+      remainingReserve: 0,
+      label: state.label,
+      message: `⚠️ Nessuna munizione di riserva compatibile in borsa/cartucciera per ricaricare il ${state.label}!`,
+    };
+  }
+
+  const toTransfer = Math.min(needed, state.reserve);
+  const newLoaded = state.loaded + toTransfer;
+
+  // 1. Sottrai toTransfer dall'inventario
+  const items = [...getCharacterInventory(char)];
+  const ammoIdx = findMatchingAmmoItem(items, weaponName);
+  let remainingReserve = 0;
+  if (ammoIdx !== -1) {
+    items[ammoIdx].quantity = Math.max(0, items[ammoIdx].quantity - toTransfer);
+    remainingReserve = items[ammoIdx].quantity;
+  }
+
+  let updatedChar = updateCharacterInventory(char, items);
+  const rawInv = [...(updatedChar.inventory || [])];
+
+  // 2. Aggiorna la riga dell'arma nell'inventario
+  if (state.weaponLineIndex !== -1 && state.weaponLineIndex < rawInv.length) {
+    const rawLine = rawInv[state.weaponLineIndex];
+    const cleanLine = rawLine
+      .replace(/\s*\[(?:Tamburo|Caricatore|Nastro|Serbatoio|Canna|Incocco|Colpi)?:\s*\d+\/\d+.*?\]/gi, '')
+      .replace(/\s*-\s*SCARIC[OA]/gi, '')
+      .trim();
+    rawInv[state.weaponLineIndex] = `${cleanLine} [${state.label}: ${newLoaded}/${state.max}]`;
+    updatedChar.inventory = rawInv;
+  }
+
+  // 3. Aggiorna mappa weaponMagazines
+  const key = weaponName || 'current_weapon';
+  updatedChar.weaponMagazines = {
+    ...(updatedChar.weaponMagazines || {}),
+    [key]: newLoaded,
+  };
+
+  return {
+    updatedChar,
+    success: true,
+    reloadedCount: toTransfer,
+    newLoaded,
+    maxLoaded: state.max,
+    remainingReserve,
+    label: state.label,
+    message: `🔄 Ricaricato ${state.label}: inseriti +${toTransfer} colpi [${newLoaded}/${state.max}]. Rimasti ${remainingReserve}x nella riserva in borsa.`,
+  };
+}
+
+/**
+ * Consuma munizioni dal tamburo/caricatore/nastro dell'arma quando si spara.
+ * NON tocca la riserva in borsa, poiché i proiettili erano già stati caricati nell'arma!
+ */
+export function consumeWeaponMagazineAmmo(
+  char: Character,
+  count: number | 'all',
+  weaponName?: string,
+  weaponClipSize?: number
+): {
+  updatedChar: Character;
+  success: boolean;
+  consumedCount: number;
+  newLoaded: number;
+  maxLoaded: number;
+  remainingReserve: number;
+  label: string;
+  message: string;
+} {
+  const state = getWeaponMagazineState(char, weaponName, weaponClipSize);
+
+  if (state.loaded <= 0) {
+    return {
+      updatedChar: char,
+      success: false,
+      consumedCount: 0,
+      newLoaded: 0,
+      maxLoaded: state.max,
+      remainingReserve: state.reserve,
+      label: state.label,
+      message: `⚠️ CLICK! ${state.label} VUOTO (0/${state.max})! Devi Ricaricare prima di poter sparare.`,
+    };
+  }
+
+  const toConsume = count === 'all' ? state.loaded : Math.min(state.loaded, Math.max(1, count));
+  const newLoaded = Math.max(0, state.loaded - toConsume);
+
+  let updatedChar = { ...char };
+  const rawInv = [...(char.inventory || [])];
+
+  if (state.weaponLineIndex !== -1 && state.weaponLineIndex < rawInv.length) {
+    const rawLine = rawInv[state.weaponLineIndex];
+    const cleanLine = rawLine
+      .replace(/\s*\[(?:Tamburo|Caricatore|Nastro|Serbatoio|Canna|Incocco|Colpi)?:\s*\d+\/\d+.*?\]/gi, '')
+      .replace(/\s*-\s*SCARIC[OA]/gi, '')
+      .trim();
+    const statusSuffix = newLoaded === 0 ? ' - SCARICO' : '';
+    rawInv[state.weaponLineIndex] = `${cleanLine} [${state.label}: ${newLoaded}/${state.max}${statusSuffix}]`;
+    updatedChar.inventory = rawInv;
+  }
+
+  const key = weaponName || 'current_weapon';
+  updatedChar.weaponMagazines = {
+    ...(updatedChar.weaponMagazines || {}),
+    [key]: newLoaded,
+  };
+
+  return {
+    updatedChar,
+    success: true,
+    consumedCount: toConsume,
+    newLoaded,
+    maxLoaded: state.max,
+    remainingReserve: state.reserve,
+    label: state.label,
+    message:
+      newLoaded === 0
+        ? `💥 Svuotato ${state.label} (${toConsume} colpi sparati)! Ora è completamente SCARICO [0/${state.max}].`
+        : `💥 Sparati ${toConsume} colpi da ${state.label}. Rimasti: ${newLoaded}/${state.max}.`,
+  };
 }
 
 /**

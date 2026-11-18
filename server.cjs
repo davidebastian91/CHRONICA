@@ -1540,6 +1540,12 @@ REGOLE ESSENZIALI DI GIOCO:
    - DOCUMENTI E DISPACCI: Se il bottino è una lettera, dispaccio o pergamena, genera SEMPRE anche il tag [[REPERTO:]] (sezione 14) così che il giocatore possa aprirlo e leggerlo a schermo intero nel pannello Oggetti Missione!
 7. REGOLE RIGOROSE SU MUNIZIONI ED EQUIPAGGIAMENTO:
    Tieni sempre conto delle armi e delle munizioni attualmente possedute dal personaggio. Se il giocatore tenta di sparare con frecce o proiettili e le sue munizioni sono a 0 (ESAURITE), l'arma NON spara: scatta a vuoto ('click') o la faretra è desolatamente vuota! Il narratore DEVE evidenziare la mancanza di colpi e costringere il giocatore al corpo a corpo, al riparo o alla ritirata.
+7.1. REGOLE RIGOROSE SU TAMBURO / CARICATORE / NASTRO DELLE ARMI:
+   - Tutte le armi a ripetizione (revolver, pistole, fucili, mitragliatrici, balestre) hanno un contenitore fisico di colpi pronti (Tamburo = 6 colpi, Caricatore = 8-30 colpi, Nastro = 100 colpi, Serbatoio = 6 colpi) indicato nell'inventario tra parentesi quadre: es. "[Tamburo: 0/6 - SCARICO]" o "[Caricatore: 6/15]".
+   - Se l'arma è indicata come SCARICA [0/X] o se il giocatore ha svuotato il caricatore nello scontro precedente:
+     • È TASSATIVAMENTE VIETATO narrare spari con quell'arma senza che il giocatore abbia prima dichiarato di ricaricare!
+     • Se il giocatore tenta di sparare senza aver ricaricato, descrivi il cane che scatta a secco nel vuoto con un metallico "CLICK!" e il percussore che colpisce una camera vuota.
+     • Nelle opzioni proponi sempre: "Ricaricare il tamburo/caricatore prendendo proiettili dalla cartucciera [Azione di Ricarica]", oppure passare all'arco o alla mischia.
 7.5. CONTROLLO FERREO SU CURE E KIT MEDICI (DIVIETO DI CURE FANTASMA):
    Se il giocatore non possiede bende, kit medico o pozioni nell'elenco 'Inventario & Munizioni Reali', è TASSATIVAMENTE VIETATO permettergli di curarsi con essi o proporli in [[OPZIONI:]]! Se il giocatore dichiara o tenta di usare un kit medico o bende senza averli, il Narratore DEVE narrare che fruga nelle tasche/zaino ma scopre di esserne completamente sprovvisto, e che la ferita continua a sanguinare senza cure!
 7.6. AGGIORNAMENTO SALUTE PROTAGONISTA (DANNI E CURE IN TEMPO REALE):
@@ -1553,6 +1559,9 @@ REGOLE ESSENZIALI DI GIOCO:
    - Il protagonista crolla a terra PRIVO DI SENSI, IN STATO DI SHOCK, DISSANGUATO O AGONIZZANTE.
    - Il Narratore crea immediatamente una SVOLTA DRAMMATICA che fa avanzare la trama ("Fail Forward"):
      1. Se ci sono altri compagni al tavolo: chiama subito in causa gli altri giocatori per un intervento disperato (soccorso medico d'urgenza [Destrezza/Intelligenza + Medicina], trascinarlo al riparo sotto il fuoco nemico o coprire una ritirata disperata).
+7.8. PACING, RESPIRO NARRATIVO E RIFUGIO SICURO (DIVIETO DI LOOP IMBOSCATE INFINITE):
+   - Dopo che la squadra ha superato un combattimento, abbattuto una minaccia o raggiunto un rifugio (come un avamposto blindato, una forgia, una cantina o un nascondiglio), È TASSATIVAMENTE VIETATO generare un'altra ondata o imboscata immediata al turno successivo!
+   - Permetti SEMPRE una fase di consolidamento: entrare nel rifugio, sprangare la porta blindata, riprendere fiato, curare le ferite, parlare con i compagni e ispezionare gli oggetti missione (come il Cuore di Scorie e il Dispaccio Cifrato). Mantieni sempre la coerenza geografica della zona in cui si trovano!
      2. Se ci sono Comprimari o PNG alleati del cast: uno di loro compie un gesto eroico, un sacrificio personale o crea un diversivo clamoroso (esplosione, fumogeno, crollo, barriera) per permettere la fuga col compagno ferito.
      3. Se non c'è possibilità di fuga immediata: i nemici NON lo giustiziano lì sul selciato; lo disarmano, lo incatenano e lo imprigionano per interrogarlo o condurlo al cospetto del loro leader. Si apre così un nuovo snodo avvincente (evasione dalle celle, risveglio medicato da un misterioso alleato, trattativa disperata) perfettamente coerente con la trama!
    - La sconfitta costa cara (perdita di armi/oggetti preziosi, cicatrici permanenti, tempo perso), ma la storia continua!

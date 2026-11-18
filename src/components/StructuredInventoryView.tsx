@@ -5,7 +5,10 @@ import {
   getCharacterInventory,
   updateCharacterInventory,
   useConsumable,
+  getWeaponMagazineState,
+  reloadWeaponMagazine,
 } from '../utils/inventorySystem';
+import { diceSensory } from '../utils/diceHaptics';
 import { matchWeaponFromCatalog } from '../utils/wodCombatRules';
 import {
   convertGearOptionToInventoryItem,
@@ -21,6 +24,7 @@ import {
   Package,
   Swords,
   Hammer,
+  RotateCw,
 } from 'lucide-react';
 
 interface StructuredInventoryViewProps {
@@ -239,6 +243,45 @@ export const StructuredInventoryView: React.FC<StructuredInventoryViewProps> = (
                           {item.isEquipped ? '✓ Impugnata' : 'Rifodera'}
                         </button>
                       )}
+
+                      {item.category === 'weapon' && (() => {
+                        const mag = getWeaponMagazineState(character, item.name);
+                        return (
+                          <div className="flex items-center space-x-1.5 flex-wrap">
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-lg border font-bold flex items-center gap-1 ${
+                              mag.loaded === 0
+                                ? 'bg-red-950 border-red-700 text-red-300 animate-pulse'
+                                : mag.loaded <= 2
+                                ? 'bg-amber-950 border-amber-700 text-amber-300'
+                                : 'bg-slate-900 border-slate-700 text-emerald-300'
+                            }`}>
+                              <span>{mag.kind === 'tamburo' ? '🔄' : mag.kind === 'nastro' ? '⛓️' : '🎯'}</span>
+                              <span>{mag.label}: {mag.loaded}/{mag.max}</span>
+                              {mag.loaded === 0 && <span className="text-[9px] uppercase font-black text-red-400">SCARICO</span>}
+                            </span>
+                            {mag.canReload && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const rel = reloadWeaponMagazine(character, item.name);
+                                  if (rel.success) {
+                                    onUpdateCharacter(rel.updatedChar);
+                                    diceSensory.playReloadMechanicalSound();
+                                    showToast(rel.message);
+                                  } else {
+                                    showToast(rel.message);
+                                  }
+                                }}
+                                className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-amber-600/80 hover:bg-amber-500 text-slate-950 font-black flex items-center gap-1 cursor-pointer transition-transform hover:scale-105"
+                                title={`Ricarica ${mag.label}`}
+                              >
+                                <RotateCw className="w-2.5 h-2.5" />
+                                <span>Ricarica</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {isOutOfAmmo && (
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-red-950 border border-red-700 text-red-300 font-bold flex items-center space-x-1">
